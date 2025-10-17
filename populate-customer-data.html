@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Populate Customer Data in Plots</title>
+</head>
+<body>
+    <h1>Populate Customer Data in Plots</h1>
+    <p>This will populate customer data for all booked and sold plots that are missing customer information.</p>
+    <button onclick="populateCustomerData()">Populate Customer Data</button>
+    <div id="results"></div>
+
+    <script>
+        async function populateCustomerData() {
+            try {
+                const token = localStorage.getItem('token') || prompt('Enter your JWT token (Admin required):');
+                
+                document.getElementById('results').innerHTML = '<p>Processing... Please wait.</p>';
+                
+                const response = await fetch('http://localhost:5007/api/plots/populate-customer-data', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                console.log('Population Result:', data);
+                
+                let html = '<h2>Population Results:</h2>';
+                html += `<p style="color: green;"><strong>${data.message}</strong></p>`;
+                html += `<p><strong>Updated Count:</strong> ${data.updatedCount}</p>`;
+                html += `<p><strong>Total Plots Checked:</strong> ${data.totalPlotsChecked}</p>`;
+                
+                if (data.errors && data.errors.length > 0) {
+                    html += '<h3>Errors:</h3>';
+                    html += '<ul>';
+                    data.errors.forEach(error => {
+                        html += `<li style="color: red;">${error}</li>`;
+                    });
+                    html += '</ul>';
+                }
+                
+                html += '<p style="color: blue;"><strong>Now refresh your plots page to see the updated customer data!</strong></p>';
+                
+                document.getElementById('results').innerHTML = html;
+                
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('results').innerHTML = `<p style="color: red;">Error: ${error.message}</p>`;
+            }
+        }
+    </script>
+</body>
+</html>

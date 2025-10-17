@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Database Structure</title>
+</head>
+<body>
+    <h1>Test Database Structure</h1>
+    <button onclick="testPlotStructure()">Test Plot Fields</button>
+    <div id="results"></div>
+
+    <script>
+        async function testPlotStructure() {
+            try {
+                const token = localStorage.getItem('token') || prompt('Enter your JWT token:');
+                
+                // Get a few plots to see their structure
+                const response = await fetch('http://localhost:5007/api/plots?pageSize=3', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                console.log('Plot Data Structure:', data);
+                
+                let html = '<h2>Plot Data Structure Test:</h2>';
+                
+                if (data.data && data.data.length > 0) {
+                    const plot = data.data[0];
+                    html += '<h3>First Plot Fields:</h3>';
+                    html += '<ul>';
+                    Object.keys(plot).forEach(key => {
+                        const value = plot[key];
+                        const hasValue = value !== null && value !== undefined && value !== '';
+                        html += `<li><strong>${key}:</strong> ${value} <span style="color: ${hasValue ? 'green' : 'red'}">(${hasValue ? 'HAS VALUE' : 'EMPTY'})</span></li>`;
+                    });
+                    html += '</ul>';
+                    
+                    // Check specifically for customer fields
+                    const customerFields = ['customerName', 'referenceName', 'receivedAmount', 'associateName'];
+                    const hasCustomerData = customerFields.some(field => plot[field] && plot[field] !== '');
+                    
+                    html += `<h3>Customer Data Status: <span style="color: ${hasCustomerData ? 'green' : 'red'}">${hasCustomerData ? 'PRESENT' : 'MISSING'}</span></h3>`;
+                    
+                    if (!hasCustomerData) {
+                        html += '<p style="color: red;"><strong>Customer data is missing! You need to run the population script.</strong></p>';
+                        html += '<p><a href="populate-customer-data.html" target="_blank">Click here to run the population script</a></p>';
+                    }
+                } else {
+                    html += '<p>No plots found in the database.</p>';
+                }
+                
+                document.getElementById('results').innerHTML = html;
+                
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('results').innerHTML = `<p style="color: red;">Error: ${error.message}</p>`;
+            }
+        }
+    </script>
+</body>
+</html>

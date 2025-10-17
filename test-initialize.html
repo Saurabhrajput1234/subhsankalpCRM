@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Initialize</title>
+</head>
+<body>
+    <h1>Test Initialize Received Amounts</h1>
+    <button onclick="testInit()">Test Initialize</button>
+    <div id="results"></div>
+
+    <script>
+        async function testInit() {
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = 'Testing...';
+            
+            try {
+                // Login first
+                const loginResponse = await fetch('http://localhost:5007/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: 'admin', password: 'Admin@123' })
+                });
+                
+                if (!loginResponse.ok) {
+                    resultsDiv.innerHTML = 'Login failed';
+                    return;
+                }
+                
+                const loginData = await loginResponse.json();
+                const token = loginData.token;
+                
+                // Call initialize endpoint
+                const response = await fetch('http://localhost:5007/api/plots/initialize-received-amounts', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    resultsDiv.innerHTML = `<p style="color: green;">Success: ${data.message}</p>`;
+                } else {
+                    const errorText = await response.text();
+                    resultsDiv.innerHTML = `<p style="color: red;">Failed: ${response.status}<br>${errorText}</p>`;
+                }
+            } catch (error) {
+                resultsDiv.innerHTML = `<p style="color: red;">Error: ${error.message}</p>`;
+            }
+        }
+        
+        // Auto-run
+        setTimeout(testInit, 1000);
+    </script>
+</body>
+</html>

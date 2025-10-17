@@ -1,0 +1,3 @@
+﻿<Project>
+  <Import Project="..\buildMultiTargeting\Subh-sankalp-estate.props" />
+</Project>

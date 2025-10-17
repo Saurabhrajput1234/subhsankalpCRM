@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Backend Connection</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .result { margin: 10px 0; padding: 10px; border-radius: 4px; }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        button { padding: 10px 20px; margin: 5px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h1>Backend Connection Test</h1>
+    
+    <button onclick="testSwagger()">Test Swagger</button>
+    <button onclick="testLogin()">Test Login</button>
+    <button onclick="testSignup()">Test Signup</button>
+    
+    <div id="results"></div>
+
+    <script>
+        const API_BASE = 'http://localhost:5007';
+        
+        function addResult(title, success, message) {
+            const div = document.createElement('div');
+            div.className = `result ${success ? 'success' : 'error'}`;
+            div.innerHTML = `<strong>${title}:</strong> ${message}`;
+            document.getElementById('results').appendChild(div);
+        }
+        
+        async function testSwagger() {
+            try {
+                const response = await fetch(`${API_BASE}/swagger/v1/swagger.json`);
+                if (response.ok) {
+                    addResult('Swagger Test', true, 'Backend is running and Swagger is accessible');
+                } else {
+                    addResult('Swagger Test', false, `HTTP ${response.status}: ${response.statusText}`);
+                }
+            } catch (error) {
+                addResult('Swagger Test', false, `Connection failed: ${error.message}`);
+            }
+        }
+        
+        async function testLogin() {
+            try {
+                const response = await fetch(`${API_BASE}/api/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        username: 'admin',
+                        password: 'Admin@123'
+                    })
+                });
+                
+                const result = await response.text();
+                if (response.ok) {
+                    addResult('Login Test', true, 'Admin login successful');
+                } else {
+                    addResult('Login Test', false, `HTTP ${response.status}: ${result}`);
+                }
+            } catch (error) {
+                addResult('Login Test', false, `Connection failed: ${error.message}`);
+            }
+        }
+        
+        async function testSignup() {
+            try {
+                const signupData = {
+                    fullName: 'Test User',
+                    username: 'testuser123',
+                    email: 'test123@example.com',
+                    mobile: '9876543210',
+                    role: 'Associate',
+                    password: 'password123',
+                    companySecretKey: 'subhsankalp2023'
+                };
+                
+                console.log('Sending signup data:', signupData);
+                
+                const response = await fetch(`${API_BASE}/api/auth/signup`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(signupData)
+                });
+                
+                const result = await response.text();
+                console.log('Signup response:', result);
+                
+                if (response.ok) {
+                    addResult('Signup Test', true, 'Signup successful!');
+                } else {
+                    addResult('Signup Test', false, `HTTP ${response.status}: ${result}`);
+                }
+            } catch (error) {
+                addResult('Signup Test', false, `Connection failed: ${error.message}`);
+            }
+        }
+    </script>
+</body>
+</html>

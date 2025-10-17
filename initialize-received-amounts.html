@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Initialize Received Amounts</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        button { padding: 10px 20px; margin: 10px; font-size: 16px; }
+        .success { color: green; }
+        .error { color: red; }
+        pre { background: #f5f5f5; padding: 10px; }
+    </style>
+</head>
+<body>
+    <h1>Initialize Received Amounts</h1>
+    <p>This will calculate and populate the ReceivedAmount field for all existing plots based on their approved receipts.</p>
+    
+    <button onclick="initializeAmounts()">Initialize Received Amounts</button>
+    
+    <div id="results"></div>
+
+    <script>
+        async function initializeAmounts() {
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = '<p>Initializing...</p>';
+            
+            // Get token first
+            let token = localStorage.getItem('token');
+            
+            if (!token) {
+                try {
+                    const loginResponse = await fetch('http://localhost:5007/api/auth/login', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ username: 'admin', password: 'Admin@123' })
+                    });
+                    
+                    if (loginResponse.ok) {
+                        const loginData = await loginResponse.json();
+                        token = loginData.token;
+                        localStorage.setItem('token', token);
+                        resultsDiv.innerHTML += '<p class="success">✅ Login successful</p>';
+                    } else {
+                        resultsDiv.innerHTML = '<p class="error">❌ Login failed</p>';
+                        return;
+                    }
+                } catch (error) {
+                    resultsDiv.innerHTML = `<p class="error">❌ Login error: ${error.message}</p>`;
+                    return;
+                }
+            }
+            
+            try {
+                const response = await fetch('http://localhost:5007/api/plots/initialize-received-amounts', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    resultsDiv.innerHTML += `<p class="success">✅ ${data.message}</p>`;
+                    resultsDiv.innerHTML += '<p>You can now refresh your plots page to see the updated received amounts.</p>';
+                } else {
+                    const errorText = await response.text();
+                    resultsDiv.innerHTML += `<p class="error">❌ Initialization failed: ${response.status}</p>`;
+                    resultsDiv.innerHTML += `<pre>${errorText}</pre>`;
+                }
+            } catch (error) {
+                resultsDiv.innerHTML += `<p class="error">❌ Network error: ${error.message}</p>`;
+            }
+        }
+    </script>
+</body>
+</html>

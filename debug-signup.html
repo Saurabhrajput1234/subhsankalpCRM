@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Signup</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .container { max-width: 800px; margin: 0 auto; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input, select { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; }
+        button { background: #007bff; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; }
+        .result { margin-top: 20px; padding: 10px; border-radius: 4px; white-space: pre-wrap; }
+        .success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .debug { background: #e2e3e5; color: #383d41; border: 1px solid #d6d8db; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Debug Signup API</h1>
+        
+        <div class="form-group">
+            <label>API URL:</label>
+            <input type="text" id="apiUrl" value="http://localhost:5007/api/auth/signup">
+        </div>
+        
+        <form id="signupForm">
+            <div class="form-group">
+                <label for="fullName">Full Name:</label>
+                <input type="text" id="fullName" name="fullName" value="Debug User" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="username">Username:</label>
+                <input type="text" id="username" name="username" value="debuguser" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="email">Email:</label>
+                <input type="email" id="email" name="email" value="debug@example.com" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="mobile">Mobile (10 digits starting with 6-9):</label>
+                <input type="tel" id="mobile" name="mobile" value="9876543210" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="role">Role:</label>
+                <select id="role" name="role" required>
+                    <option value="Associate">Associate</option>
+                    <option value="Admin">Admin</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="password">Password (min 6 chars):</label>
+                <input type="password" id="password" name="password" value="password123" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="companySecretKey">Company Secret Key:</label>
+                <input type="text" id="companySecretKey" name="companySecretKey" value="subhsankalp2023" required>
+            </div>
+            
+            <button type="submit">Test Signup</button>
+        </form>
+        
+        <div id="debugInfo" class="result debug">
+            <strong>Debug Info:</strong>
+            <div id="requestData"></div>
+        </div>
+        
+        <div id="result"></div>
+    </div>
+
+    <script>
+        document.getElementById('signupForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const data = Object.fromEntries(formData.entries());
+            const apiUrl = document.getElementById('apiUrl').value;
+            
+            // Show request data
+            document.getElementById('requestData').textContent = 
+                'Request URL: ' + apiUrl + '\n' +
+                'Request Data: ' + JSON.stringify(data, null, 2);
+            
+            try {
+                console.log('Sending signup request:', data);
+                
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data)
+                });
+                
+                console.log('Response status:', response.status);
+                console.log('Response headers:', response.headers);
+                
+                const responseText = await response.text();
+                console.log('Response text:', responseText);
+                
+                let result;
+                try {
+                    result = JSON.parse(responseText);
+                } catch {
+                    result = responseText;
+                }
+                
+                const resultDiv = document.getElementById('result');
+                
+                if (response.ok) {
+                    resultDiv.className = 'result success';
+                    resultDiv.innerHTML = `
+                        <h3>✅ Signup Successful!</h3>
+                        <strong>Response:</strong>
+                        ${JSON.stringify(result, null, 2)}
+                    `;
+                } else {
+                    resultDiv.className = 'result error';
+                    resultDiv.innerHTML = `
+                        <h3>❌ Signup Failed (${response.status})</h3>
+                        <strong>Response:</strong>
+                        ${JSON.stringify(result, null, 2)}
+                    `;
+                }
+            } catch (error) {
+                console.error('Network error:', error);
+                const resultDiv = document.getElementById('result');
+                resultDiv.className = 'result error';
+                resultDiv.innerHTML = `
+                    <h3>❌ Network Error</h3>
+                    <strong>Error:</strong> ${error.message}
+                    <br><br>
+                    <strong>Possible causes:</strong>
+                    <ul>
+                        <li>Backend not running on port 5007</li>
+                        <li>CORS issues</li>
+                        <li>Network connectivity problems</li>
+                    </ul>
+                `;
+            }
+        });
+    </script>
+</body>
+</html>

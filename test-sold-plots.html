@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Sold Plots Data</title>
+</head>
+<body>
+    <h1>Check Sold Plots Data</h1>
+    <button onclick="checkSoldPlots()">Check Sold Plots</button>
+    <div id="results"></div>
+
+    <script>
+        async function checkSoldPlots() {
+            try {
+                const token = localStorage.getItem('token') || prompt('Enter your JWT token:');
+                
+                const response = await fetch('http://localhost:5007/api/plots/check-sold-plots', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                console.log('Sold Plots Data:', data);
+                
+                let html = '<h2>Plots Data:</h2>';
+                html += `<p><strong>Sold Plots Count:</strong> ${data.soldPlotsCount}</p>`;
+                html += `<p><strong>Booked Plots Count:</strong> ${data.bookedPlotsCount}</p>`;
+                
+                if (data.soldPlots && data.soldPlots.length > 0) {
+                    html += '<h3>Sold Plots:</h3>';
+                    data.soldPlots.forEach((plot, index) => {
+                        html += `<div style="border: 1px solid #ccc; margin: 10px; padding: 10px;">`;
+                        html += `<h4>Sold Plot ${index + 1}: ${plot.siteName} - ${plot.plotNumber}</h4>`;
+                        html += `<p><strong>Status:</strong> ${plot.status}</p>`;
+                        html += `<p><strong>Customer Name:</strong> ${plot.customerName || 'EMPTY'}</p>`;
+                        html += `<p><strong>Reference Name:</strong> ${plot.referenceName || 'EMPTY'}</p>`;
+                        html += `<p><strong>Associate Name:</strong> ${plot.associateName || 'EMPTY'}</p>`;
+                        html += `<p><strong>Received Amount:</strong> ${plot.receivedAmount || 0}</p>`;
+                        html += `<p><strong>Total Price:</strong> ${plot.totalPrice || 0}</p>`;
+                        html += `</div>`;
+                    });
+                } else {
+                    html += '<p><strong>No sold plots found</strong></p>';
+                }
+                
+                if (data.bookedPlots && data.bookedPlots.length > 0) {
+                    html += '<h3>Booked Plots:</h3>';
+                    data.bookedPlots.forEach((plot, index) => {
+                        html += `<div style="border: 1px solid #ccc; margin: 10px; padding: 10px;">`;
+                        html += `<h4>Booked Plot ${index + 1}: ${plot.siteName} - ${plot.plotNumber}</h4>`;
+                        html += `<p><strong>Status:</strong> ${plot.status}</p>`;
+                        html += `<p><strong>Customer Name:</strong> ${plot.customerName || 'EMPTY'}</p>`;
+                        html += `<p><strong>Reference Name:</strong> ${plot.referenceName || 'EMPTY'}</p>`;
+                        html += `<p><strong>Associate Name:</strong> ${plot.associateName || 'EMPTY'}</p>`;
+                        html += `<p><strong>Received Amount:</strong> ${plot.receivedAmount || 0}</p>`;
+                        html += `<p><strong>Total Price:</strong> ${plot.totalPrice || 0}</p>`;
+                        html += `</div>`;
+                    });
+                } else {
+                    html += '<p><strong>No booked plots found</strong></p>';
+                }
+                
+                document.getElementById('results').innerHTML = html;
+                
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('results').innerHTML = `<p style="color: red;">Error: ${error.message}</p>`;
+            }
+        }
+    </script>
+</body>
+</html>

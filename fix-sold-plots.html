@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Fix Sold Plots Data</title>
+</head>
+<body>
+    <h1>Fix Sold Plots Customer Data</h1>
+    <button onclick="checkSoldPlots()">1. Check Current Data</button>
+    <button onclick="fixSoldPlots()">2. Fix Sold Plots Data</button>
+    <div id="results"></div>
+
+    <script>
+        async function checkSoldPlots() {
+            try {
+                const token = localStorage.getItem('token') || prompt('Enter your JWT token:');
+                
+                const response = await fetch('http://localhost:5007/api/plots/check-sold-plots', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                console.log('Current Data:', data);
+                
+                let html = '<h2>Current Plots Data:</h2>';
+                html += `<p><strong>Sold Plots Count:</strong> ${data.soldPlotsCount}</p>`;
+                html += `<p><strong>Booked Plots Count:</strong> ${data.bookedPlotsCount}</p>`;
+                
+                if (data.soldPlots && data.soldPlots.length > 0) {
+                    html += '<h3>Sold Plots:</h3>';
+                    data.soldPlots.forEach((plot, index) => {
+                        const hasCustomerData = plot.customerName && plot.customerName.trim() !== '';
+                        html += `<div style="border: 1px solid ${hasCustomerData ? 'green' : 'red'}; margin: 10px; padding: 10px;">`;
+                        html += `<h4>Sold Plot ${index + 1}: ${plot.siteName} - ${plot.plotNumber}</h4>`;
+                        html += `<p><strong>Customer Name:</strong> ${plot.customerName || 'MISSING'}</p>`;
+                        html += `<p><strong>Reference Name:</strong> ${plot.referenceName || 'MISSING'}</p>`;
+                        html += `<p><strong>Received Amount:</strong> ${plot.receivedAmount || 0}</p>`;
+                        html += `<p style="color: ${hasCustomerData ? 'green' : 'red'}"><strong>Status:</strong> ${hasCustomerData ? 'HAS DATA' : 'NEEDS FIX'}</p>`;
+                        html += `</div>`;
+                    });
+                }
+                
+                document.getElementById('results').innerHTML = html;
+                
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('results').innerHTML = `<p style="color: red;">Error: ${error.message}</p>`;
+            }
+        }
+
+        async function fixSoldPlots() {
+            try {
+                const token = localStorage.getItem('token') || prompt('Enter your JWT token:');
+                
+                const response = await fetch('http://localhost:5007/api/plots/fix-sold-plots-data', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                console.log('Fix Result:', data);
+                
+                let html = '<h2>Fix Results:</h2>';
+                html += `<p style="color: green;"><strong>${data.message}</strong></p>`;
+                html += `<p>Updated Count: ${data.updatedCount}</p>`;
+                html += `<p>Total Checked: ${data.totalSoldPlotsChecked}</p>`;
+                html += '<p><em>Now click "Check Current Data" to see the updated results!</em></p>';
+                
+                document.getElementById('results').innerHTML = html;
+                
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('results').innerHTML = `<p style="color: red;">Error: ${error.message}</p>`;
+            }
+        }
+    </script>
+</body>
+</html>

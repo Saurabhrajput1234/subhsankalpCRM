@@ -1,0 +1,6 @@
+@Subh_sankalp_estate_HostAddress = http://localhost:5007
+
+GET {{Subh_sankalp_estate_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
