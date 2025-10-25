@@ -202,3 +202,4 @@ C:\Users\saura\source\repos\Subh-sankalp-estate\Receipt-portal\obj\Debug\net8.0\
 C:\Users\saura\source\repos\Subh-sankalp-estate\Receipt-portal\obj\Debug\net8.0\Subh-sankalp-estate.pdb
 C:\Users\saura\source\repos\Subh-sankalp-estate\Receipt-portal\obj\Debug\net8.0\Subh-sankalp-estate.genruntimeconfig.cache
 C:\Users\saura\source\repos\Subh-sankalp-estate\Receipt-portal\obj\Debug\net8.0\ref\Subh-sankalp-estate.dll
+C:\Users\saura\source\repos\Subh-sankalp-estate\Receipt-portal\obj\Debug\net8.0\Subh-sankalp-estate.sourcelink.json

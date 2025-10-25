@@ -947,6 +947,104 @@ namespace Subh_sankalp_estate.Controllers
             }
         }
 
+        [HttpGet("basic-rate-discount-analysis/{plotId}")]
+        [Authorize(Roles = "Admin")]
+        public async Task<ActionResult> AnalyzeBasicRateDiscounts(int plotId)
+        {
+            try
+            {
+                var plot = await _context.Plots.FindAsync(plotId);
+                if (plot == null)
+                {
+                    return NotFound("Plot not found");
+                }
+
+                // Get all receipts with discount information
+                var receipts = await _context.Receipts
+                    .Where(r => r.SiteName == plot.SiteName && r.PlotVillaNo == plot.PlotNumber)
+                    .Select(r => new {
+                        r.Id,
+                        r.ReceiptNo,
+                        r.ReceiptType,
+                        r.Status,
+                        r.Amount,
+                        r.TotalAmount,
+                        r.AdminDiscount,
+                        r.AdminRemarks,
+                        r.ApprovedAt,
+                        r.BasicRate
+                    })
+                    .OrderBy(r => r.ApprovedAt ?? DateTime.MinValue).ThenBy(r => r.Id)
+                    .ToListAsync();
+
+                var plotSize = ParsePlotSize(plot.PlotSize);
+                
+                // Find the original basic rate (from the first receipt or plot creation)
+                var firstReceipt = receipts.OrderBy(r => r.Id).FirstOrDefault();
+                var originalBasicRate = firstReceipt?.BasicRate ?? plot.BasicRate;
+                
+                // Calculate total basic rate discount applied
+                var totalBasicRateDiscount = receipts
+                    .Where(r => r.Status == "Approved" && r.AdminDiscount.HasValue)
+                    .Sum(r => r.AdminDiscount!.Value);
+
+                // Calculate prices
+                var originalTotalPrice = plotSize * originalBasicRate;
+                var currentBasicRate = plot.BasicRate;
+                var currentTotalPrice = plot.TotalPrice;
+                var calculatedTotalPrice = plotSize * currentBasicRate;
+
+                // Calculate received amount
+                var totalReceived = receipts
+                    .Where(r => r.Status == "Approved" || (r.Status == "Pending" && r.ReceiptType == "token"))
+                    .Sum(r => r.TotalAmount > 0 ? r.TotalAmount : r.Amount);
+
+                return Ok(new {
+                    PlotInfo = $"{plot.SiteName} - {plot.PlotNumber} ({plotSize} sq ft)",
+                    
+                    BasicRateBreakdown = new {
+                        OriginalBasicRate = originalBasicRate,
+                        CurrentBasicRate = currentBasicRate,
+                        TotalBasicRateDiscount = totalBasicRateDiscount,
+                        CalculatedBasicRate = originalBasicRate - totalBasicRateDiscount,
+                        IsBasicRateCorrect = currentBasicRate == (originalBasicRate - totalBasicRateDiscount)
+                    },
+                    
+                    PriceBreakdown = new {
+                        PlotSize = plotSize,
+                        OriginalTotalPrice = originalTotalPrice,
+                        CurrentTotalPrice = currentTotalPrice,
+                        CalculatedTotalPrice = calculatedTotalPrice,
+                        TotalDiscountAmount = originalTotalPrice - calculatedTotalPrice,
+                        IsTotalPriceCorrect = currentTotalPrice == calculatedTotalPrice
+                    },
+                    
+                    PaymentBreakdown = new {
+                        TotalReceived = totalReceived,
+                        RemainingBalance = currentTotalPrice - totalReceived,
+                        PaymentPercentage = currentTotalPrice > 0 ? (totalReceived / currentTotalPrice * 100) : 0
+                    },
+                    
+                    DiscountHistory = receipts
+                        .Where(r => r.AdminDiscount.HasValue && r.AdminDiscount > 0)
+                        .Select(r => new {
+                            r.ReceiptNo,
+                            r.ReceiptType,
+                            BasicRateDiscount = r.AdminDiscount,
+                            DiscountAmount = r.AdminDiscount * plotSize,
+                            r.AdminRemarks,
+                            r.ApprovedAt
+                        }),
+                    
+                    AllReceipts = receipts
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { error = ex.Message });
+            }
+        }
+
         [HttpPost("force-update-plot-amounts")]
         [Authorize(Roles = "Admin")]
         public async Task<ActionResult> ForceUpdatePlotAmounts()
@@ -1002,6 +1100,444 @@ namespace Subh_sankalp_estate.Controllers
                     totalPlots = plots.Count,
                     changedPlots = results.Count(r => (bool)r.GetType().GetProperty("Changed")?.GetValue(r)!),
                     results = results.Where(r => (bool)r.GetType().GetProperty("Changed")?.GetValue(r)!).ToList()
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { error = ex.Message });
+            }
+        }
+
+        [HttpPost("test-approval-with-discount")]
+        [Authorize(Roles = "Admin")]
+        public async Task<ActionResult> TestApprovalWithDiscount([FromBody] TestApprovalDto testDto)
+        {
+            try
+            {
+                var receipt = await _context.Receipts
+                    .Include(r => r.Plot)
+                    .FirstOrDefaultAsync(r => r.Id == testDto.ReceiptId);
+
+                if (receipt == null)
+                {
+                    return NotFound("Receipt not found");
+                }
+
+                // Capture before state
+                var beforeState = new {
+                    ReceiptAmount = receipt.Amount,
+                    ReceiptTotalAmount = receipt.TotalAmount,
+                    PlotBasicRate = receipt.Plot?.BasicRate,
+                    PlotTotalPrice = receipt.Plot?.TotalPrice,
+                    PlotReceivedAmount = receipt.Plot?.ReceivedAmount
+                };
+
+                // Simulate the approval process
+                var approveDto = new ApproveReceiptDto
+                {
+                    Discount = testDto.BasicRateDiscount,
+                    Remarks = "Test approval with discount"
+                };
+
+                // Call the actual approval method logic
+                receipt.Status = "Approved";
+                receipt.AdminDiscount = approveDto.Discount ?? 0;
+                receipt.AdminRemarks = approveDto.Remarks;
+                receipt.ApprovedAt = DateTime.UtcNow;
+
+                // Apply our fixed logic
+                var originalReceiptAmount = receipt.Amount;
+                receipt.TotalAmount = originalReceiptAmount; // Keep original amount
+
+                // Apply discount to plot only
+                if (receipt.Plot != null && approveDto.Discount.HasValue && approveDto.Discount.Value > 0)
+                {
+                    var plotSize = ParsePlotSize(receipt.Plot.PlotSize);
+                    var basicRateDiscount = approveDto.Discount.Value;
+                    var currentBasicRate = receipt.Plot.BasicRate;
+                    var newBasicRate = Math.Max(0, currentBasicRate - basicRateDiscount);
+                    var newTotalPrice = plotSize * newBasicRate;
+
+                    receipt.Plot.BasicRate = newBasicRate;
+                    receipt.Plot.TotalPrice = newTotalPrice;
+                    receipt.Plot.UpdatedAt = DateTime.UtcNow;
+                }
+
+                await _context.SaveChangesAsync();
+
+                // Capture after state
+                var afterState = new {
+                    ReceiptAmount = receipt.Amount,
+                    ReceiptTotalAmount = receipt.TotalAmount,
+                    PlotBasicRate = receipt.Plot?.BasicRate,
+                    PlotTotalPrice = receipt.Plot?.TotalPrice,
+                    PlotReceivedAmount = receipt.Plot?.ReceivedAmount
+                };
+
+                return Ok(new {
+                    message = "Test approval completed",
+                    receiptId = receipt.Id,
+                    beforeState = beforeState,
+                    afterState = afterState,
+                    changes = new {
+                        ReceiptAmountChanged = beforeState.ReceiptTotalAmount != afterState.ReceiptTotalAmount,
+                        PlotPriceChanged = beforeState.PlotTotalPrice != afterState.PlotTotalPrice,
+                        BasicRateChanged = beforeState.PlotBasicRate != afterState.PlotBasicRate
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { error = ex.Message });
+            }
+        }
+
+        [HttpGet("verify-discount-separation/{plotId}")]
+        [Authorize(Roles = "Admin")]
+        public async Task<ActionResult> VerifyDiscountSeparation(int plotId)
+        {
+            try
+            {
+                var plot = await _context.Plots.FindAsync(plotId);
+                if (plot == null)
+                {
+                    return NotFound("Plot not found");
+                }
+
+                var receipts = await _context.Receipts
+                    .Where(r => r.SiteName == plot.SiteName && r.PlotVillaNo == plot.PlotNumber)
+                    .OrderBy(r => r.CreatedAt)
+                    .ToListAsync();
+
+                var plotSize = ParsePlotSize(plot.PlotSize);
+
+                return Ok(new {
+                    PlotInfo = $"{plot.SiteName} - {plot.PlotNumber} ({plotSize} sq ft)",
+                    
+                    CurrentState = new {
+                        PlotBasicRate = plot.BasicRate,
+                        PlotTotalPrice = plot.TotalPrice,
+                        PlotReceivedAmount = plot.ReceivedAmount
+                    },
+                    
+                    ReceiptAmounts = receipts.Select(r => new {
+                        r.ReceiptNo,
+                        r.ReceiptType,
+                        r.Status,
+                        OriginalAmount = r.Amount,
+                        FinalAmount = r.TotalAmount,
+                        AdminDiscount = r.AdminDiscount,
+                        Note = "Receipt amounts should NEVER be affected by plot discounts"
+                    }),
+                    
+                    CalculatedValues = new {
+                        TotalReceivedFromReceipts = receipts
+                            .Where(r => r.Status == "Approved" || (r.Status == "Pending" && r.ReceiptType == "token"))
+                            .Sum(r => r.TotalAmount > 0 ? r.TotalAmount : r.Amount),
+                        
+                        ExpectedTotalPrice = plotSize * plot.BasicRate,
+                        
+                        TotalDiscountsApplied = receipts
+                            .Where(r => r.AdminDiscount.HasValue)
+                            .Sum(r => r.AdminDiscount!.Value)
+                    },
+                    
+                    DiscountRule = "Discount should reduce PLOT TOTAL PRICE, not RECEIPT AMOUNTS",
+                    
+                    ExpectedBehavior = new {
+                        ReceiptAmounts = "Should remain exactly as entered by associate",
+                        PlotTotalPrice = "Should be reduced by (discount per sq ft × plot size)",
+                        ReceivedAmount = "Should be sum of actual receipt amounts (unchanged)"
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { error = ex.Message });
+            }
+        }
+
+        [HttpGet("check-receipt-amounts/{plotId}")]
+        [Authorize(Roles = "Admin")]
+        public async Task<ActionResult> CheckReceiptAmounts(int plotId)
+        {
+            try
+            {
+                var plot = await _context.Plots.FindAsync(plotId);
+                if (plot == null)
+                {
+                    return NotFound("Plot not found");
+                }
+
+                // Get all receipts with detailed amount information
+                var receipts = await _context.Receipts
+                    .Where(r => r.SiteName == plot.SiteName && r.PlotVillaNo == plot.PlotNumber)
+                    .Select(r => new {
+                        r.Id,
+                        r.ReceiptNo,
+                        r.ReceiptType,
+                        r.Status,
+                        OriginalAmount = r.Amount,
+                        FinalTotalAmount = r.TotalAmount,
+                        AdminDiscount = r.AdminDiscount,
+                        Other = r.Other,
+                        UsedInCalculation = r.TotalAmount > 0 ? r.TotalAmount : r.Amount,
+                        IsIncluded = (r.Status == "Approved" || (r.Status == "Pending" && r.ReceiptType == "token")),
+                        r.CreatedAt,
+                        r.ApprovedAt
+                    })
+                    .OrderBy(r => r.CreatedAt)
+                    .ToListAsync();
+
+                var totalReceived = receipts
+                    .Where(r => r.IsIncluded)
+                    .Sum(r => r.UsedInCalculation);
+
+                return Ok(new {
+                    PlotInfo = $"{plot.SiteName} - {plot.PlotNumber}",
+                    PlotReceivedAmount = plot.ReceivedAmount,
+                    CalculatedReceivedAmount = totalReceived,
+                    PlotTotalPrice = plot.TotalPrice,
+                    PlotBasicRate = plot.BasicRate,
+                    
+                    ReceiptBreakdown = receipts.Select(r => new {
+                        r.ReceiptNo,
+                        r.ReceiptType,
+                        r.Status,
+                        r.OriginalAmount,
+                        r.FinalTotalAmount,
+                        r.AdminDiscount,
+                        r.Other,
+                        r.UsedInCalculation,
+                        r.IsIncluded,
+                        Note = r.IsIncluded ? "Counted in received amount" : "Not counted"
+                    }),
+                    
+                    Summary = new {
+                        TotalReceipts = receipts.Count,
+                        IncludedReceipts = receipts.Count(r => r.IsIncluded),
+                        TotalOriginalAmount = receipts.Where(r => r.IsIncluded).Sum(r => r.OriginalAmount),
+                        TotalFinalAmount = receipts.Where(r => r.IsIncluded).Sum(r => r.UsedInCalculation),
+                        TotalDiscounts = receipts.Where(r => r.AdminDiscount.HasValue).Sum(r => r.AdminDiscount!.Value)
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { error = ex.Message });
+            }
+        }
+
+        [HttpPost("test-discount-calculation")]
+        [Authorize(Roles = "Admin")]
+        public async Task<ActionResult> TestDiscountCalculation([FromBody] TestDiscountDto testDto)
+        {
+            try
+            {
+                var plot = await _context.Plots.FindAsync(testDto.PlotId);
+                if (plot == null)
+                {
+                    return NotFound("Plot not found");
+                }
+
+                var plotSize = ParsePlotSize(plot.PlotSize);
+                var originalBasicRate = plot.BasicRate;
+                var originalTotalPrice = plot.TotalPrice > 0 ? plot.TotalPrice : (plotSize * originalBasicRate);
+                
+                var basicRateDiscount = testDto.BasicRateDiscount;
+                var newBasicRate = Math.Max(0, originalBasicRate - basicRateDiscount);
+                var newTotalPrice = plotSize * newBasicRate;
+                var totalDiscountAmount = originalTotalPrice - newTotalPrice;
+
+                return Ok(new {
+                    PlotInfo = $"{plot.SiteName} - {plot.PlotNumber}",
+                    PlotSizeString = plot.PlotSize,
+                    ParsedPlotSize = plotSize,
+                    
+                    OriginalValues = new {
+                        BasicRate = originalBasicRate,
+                        TotalPrice = originalTotalPrice
+                    },
+                    
+                    DiscountCalculation = new {
+                        BasicRateDiscount = basicRateDiscount,
+                        NewBasicRate = newBasicRate,
+                        NewTotalPrice = newTotalPrice,
+                        TotalDiscountAmount = totalDiscountAmount
+                    },
+                    
+                    Formula = new {
+                        Step1 = $"Original: {plotSize} sq ft × ₹{originalBasicRate} = ₹{originalTotalPrice:N0}",
+                        Step2 = $"Discount: ₹{originalBasicRate} - ₹{basicRateDiscount} = ₹{newBasicRate} per sq ft",
+                        Step3 = $"New Total: {plotSize} sq ft × ₹{newBasicRate} = ₹{newTotalPrice:N0}",
+                        Step4 = $"Total Discount: ₹{originalTotalPrice:N0} - ₹{newTotalPrice:N0} = ₹{totalDiscountAmount:N0}"
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { error = ex.Message });
+            }
+        }
+
+        [HttpGet("debug-plot-calculation/{plotId}")]
+        [Authorize(Roles = "Admin")]
+        public async Task<ActionResult> DebugPlotCalculation(int plotId)
+        {
+            try
+            {
+                var plot = await _context.Plots.FindAsync(plotId);
+                if (plot == null)
+                {
+                    return NotFound("Plot not found");
+                }
+
+                var plotSize = ParsePlotSize(plot.PlotSize);
+                var calculatedTotalPrice = plotSize * plot.BasicRate;
+
+                // Get all receipts for debugging
+                var receipts = await _context.Receipts
+                    .Where(r => r.SiteName == plot.SiteName && r.PlotVillaNo == plot.PlotNumber)
+                    .Select(r => new {
+                        r.Id,
+                        r.ReceiptNo,
+                        r.Status,
+                        r.Amount,
+                        r.TotalAmount,
+                        r.AdminDiscount,
+                        r.BasicRate,
+                        r.PlotSize,
+                        r.ApprovedAt
+                    })
+                    .OrderBy(r => r.Id)
+                    .ToListAsync();
+
+                return Ok(new {
+                    PlotInfo = new {
+                        PlotId = plot.Id,
+                        SiteName = plot.SiteName,
+                        PlotNumber = plot.PlotNumber,
+                        PlotSizeString = plot.PlotSize,
+                        ParsedPlotSize = plotSize,
+                        CurrentBasicRate = plot.BasicRate,
+                        StoredTotalPrice = plot.TotalPrice,
+                        CalculatedTotalPrice = calculatedTotalPrice,
+                        ReceivedAmount = plot.ReceivedAmount
+                    },
+                    
+                    Calculation = new {
+                        Formula = "Total Price = Plot Size × Basic Rate",
+                        PlotSize = plotSize,
+                        BasicRate = plot.BasicRate,
+                        Result = calculatedTotalPrice,
+                        IsConsistent = plot.TotalPrice == calculatedTotalPrice
+                    },
+                    
+                    ReceiptHistory = receipts,
+                    
+                    DiscountHistory = receipts
+                        .Where(r => r.AdminDiscount.HasValue && r.AdminDiscount > 0)
+                        .Select(r => new {
+                            r.ReceiptNo,
+                            BasicRateDiscount = r.AdminDiscount,
+                            TotalDiscountAmount = r.AdminDiscount * plotSize,
+                            r.ApprovedAt
+                        })
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { error = ex.Message });
+            }
+        }
+
+        [HttpPost("fix-basic-rate-discounts")]
+        [Authorize(Roles = "Admin")]
+        public async Task<ActionResult> FixBasicRateDiscounts()
+        {
+            try
+            {
+                var plots = await _context.Plots.ToListAsync();
+                var results = new List<object>();
+
+                foreach (var plot in plots)
+                {
+                    var plotSize = ParsePlotSize(plot.PlotSize);
+                    
+                    // Get all approved receipts with discounts for this plot
+                    var discountedReceipts = await _context.Receipts
+                        .Where(r => r.SiteName == plot.SiteName && r.PlotVillaNo == plot.PlotNumber && 
+                                   r.Status == "Approved" && r.AdminDiscount.HasValue && r.AdminDiscount > 0)
+                        .OrderBy(r => r.ApprovedAt)
+                        .ToListAsync();
+
+                    if (discountedReceipts.Any())
+                    {
+                        // Find original basic rate (from first receipt or current if no receipts)
+                        var firstReceipt = await _context.Receipts
+                            .Where(r => r.SiteName == plot.SiteName && r.PlotVillaNo == plot.PlotNumber)
+                            .OrderBy(r => r.Id)
+                            .FirstOrDefaultAsync();
+                        
+                        var originalBasicRate = firstReceipt?.BasicRate ?? plot.BasicRate;
+                        
+                        // Calculate total basic rate discount
+                        var totalBasicRateDiscount = discountedReceipts.Sum(r => r.AdminDiscount!.Value);
+                        
+                        // Calculate correct basic rate and total price
+                        var correctBasicRate = Math.Max(0, originalBasicRate - totalBasicRateDiscount);
+                        var correctTotalPrice = plotSize * correctBasicRate;
+
+                        var oldBasicRate = plot.BasicRate;
+                        var oldTotalPrice = plot.TotalPrice;
+                        var changed = false;
+
+                        // Update basic rate if different
+                        if (plot.BasicRate != correctBasicRate)
+                        {
+                            plot.BasicRate = correctBasicRate;
+                            changed = true;
+                        }
+
+                        // Update total price if different
+                        if (plot.TotalPrice != correctTotalPrice)
+                        {
+                            plot.TotalPrice = correctTotalPrice;
+                            changed = true;
+                        }
+
+                        if (changed)
+                        {
+                            plot.UpdatedAt = DateTime.UtcNow;
+                        }
+
+                        results.Add(new {
+                            PlotId = plot.Id,
+                            PlotInfo = $"{plot.SiteName} - {plot.PlotNumber} ({plotSize} sq ft)",
+                            OriginalBasicRate = originalBasicRate,
+                            TotalBasicRateDiscount = totalBasicRateDiscount,
+                            OldBasicRate = oldBasicRate,
+                            NewBasicRate = correctBasicRate,
+                            OldTotalPrice = oldTotalPrice,
+                            NewTotalPrice = correctTotalPrice,
+                            Changed = changed,
+                            DiscountedReceipts = discountedReceipts.Select(r => new {
+                                r.ReceiptNo,
+                                BasicRateDiscount = r.AdminDiscount,
+                                r.ApprovedAt
+                            })
+                        });
+                    }
+                }
+
+                await _context.SaveChangesAsync();
+
+                return Ok(new {
+                    message = "Fixed basic rate discount logic for all plots",
+                    totalPlotsChecked = plots.Count,
+                    plotsWithDiscounts = results.Count,
+                    plotsChanged = results.Count(r => (bool)r.GetType().GetProperty("Changed")?.GetValue(r)!),
+                    results = results
                 });
             }
             catch (Exception ex)
@@ -1212,5 +1748,17 @@ namespace Subh_sankalp_estate.Controllers
                 _ => isDescending ? query.OrderByDescending(p => p.CreatedAt) : query.OrderBy(p => p.CreatedAt)
             };
         }
+    }
+
+    public class TestDiscountDto
+    {
+        public int PlotId { get; set; }
+        public decimal BasicRateDiscount { get; set; }
+    }
+
+    public class TestApprovalDto
+    {
+        public long ReceiptId { get; set; }
+        public decimal BasicRateDiscount { get; set; }
     }
 }
