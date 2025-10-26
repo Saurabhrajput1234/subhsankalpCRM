@@ -12,11 +12,17 @@ namespace Subh_sankalp_estate
     {
         public static void Main(string[] args)
         {
+            // Configure PostgreSQL to handle DateTime properly
+            AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
+            
             var builder = WebApplication.CreateBuilder(args);
 
             // Add services to the container.
             builder.Services.AddDbContext<ApplicationDbContext>(options =>
-                options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+                options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"), 
+                    o => {
+                        o.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery);
+                    }));
 
             // JWT Configuration
             var jwtSettings = builder.Configuration.GetSection("Jwt");

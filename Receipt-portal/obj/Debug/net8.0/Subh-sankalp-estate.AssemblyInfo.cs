@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("Subh-sankalp-estate")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+5ae84b4813da47fb06f273a06ac5d4901d3c9a01")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+6e1a6d1c476a33cfa2062549368ef944e53887c0")]
 [assembly: System.Reflection.AssemblyProductAttribute("Subh-sankalp-estate")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Subh-sankalp-estate")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
