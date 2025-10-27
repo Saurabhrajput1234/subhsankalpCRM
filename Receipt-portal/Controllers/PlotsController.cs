@@ -155,27 +155,61 @@ namespace Subh_sankalp_estate.Controllers
                     .Where(r => r.SiteName == p.SiteName && r.PlotVillaNo == p.PlotNumber)
                     .ToList();
                 
-                // Get the best receipt for customer info (approved first, then most recent)
-                var receipt = matchingReceipts
-                    .OrderByDescending(r => r.Status == "Approved" ? 1 : 0)
-                    .ThenByDescending(r => r.CreatedAt)
-                    .FirstOrDefault();
+                // Get the best receipt for customer info based on plot status
+                Receipt receipt = null;
+                if (p.Status == "Tokened")
+                {
+                    // For tokened plots, get the approved token receipt
+                    receipt = matchingReceipts
+                        .Where(r => r.ReceiptType.ToLower() == "token" && r.Status == "Approved")
+                        .OrderByDescending(r => r.CreatedAt)
+                        .FirstOrDefault();
+                }
+                else
+                {
+                    // For other plots, get the best receipt (approved first, then most recent)
+                    receipt = matchingReceipts
+                        .OrderByDescending(r => r.Status == "Approved" ? 1 : 0)
+                        .ThenByDescending(r => r.CreatedAt)
+                        .FirstOrDefault();
+                }
                 
                 // Calculate total price
                 var plotSize = ParsePlotSize(p.PlotSize);
                 var calculatedTotalPrice = p.TotalPrice > 0 ? p.TotalPrice : (plotSize * p.BasicRate);
                 
-                // Always calculate received amount from receipts to ensure accuracy
-                // Sum receipts: Approved (all types) + Pending token receipts (actual money received)
-                var calculatedReceivedAmount = matchingReceipts
-                    .Where(r => r.Status == "Approved" || 
-                               (r.Status == "Pending" && r.ReceiptType == "token"))
-                    .Sum(r => r.TotalAmount > 0 ? r.TotalAmount : r.Amount);
+                // Calculate received amount based on plot status
+                decimal calculatedReceivedAmount = 0;
+                if (p.Status == "Tokened")
+                {
+                    // For tokened plots, only count approved receipts
+                    calculatedReceivedAmount = matchingReceipts
+                        .Where(r => r.Status == "Approved")
+                        .Sum(r => r.TotalAmount > 0 ? r.TotalAmount : r.Amount);
+                }
+                else
+                {
+                    // For other plots, use the original logic
+                    calculatedReceivedAmount = matchingReceipts
+                        .Where(r => r.Status == "Approved" || 
+                                   (r.Status == "Pending" && r.ReceiptType == "token"))
+                        .Sum(r => r.TotalAmount > 0 ? r.TotalAmount : r.Amount);
+                }
                 
-                // Use calculated amount (this ensures we always show the sum of receipt amounts)
                 var storedReceivedAmount = calculatedReceivedAmount;
                 
                 var remainingBalance = calculatedTotalPrice - storedReceivedAmount;
+                
+                // Get token expiry information if plot is tokened
+                DateTime? tokenExpiryDate = null;
+                if (p.Status == "Tokened")
+                {
+                    var latestTokenReceipt = matchingReceipts
+                        .Where(r => r.ReceiptType.ToLower() == "token" && r.Status == "Approved")
+                        .OrderByDescending(r => r.CreatedAt)
+                        .FirstOrDefault();
+                    tokenExpiryDate = latestTokenReceipt?.TokenExpiryDate;
+                }
                 
                 return new PlotResponseDto
                 {
@@ -193,7 +227,8 @@ namespace Subh_sankalp_estate.Controllers
                     AssociateName = receipt?.CreatedBy?.FullName ?? string.Empty,
                     ReferenceName = receipt?.ReferenceName ?? string.Empty,
                     ReceivedAmount = storedReceivedAmount, // Use stored received amount
-                    CreatedAt = p.CreatedAt
+                    CreatedAt = p.CreatedAt,
+                    TokenExpiryDate = tokenExpiryDate
                 };
             }).ToList();
             
@@ -255,6 +290,17 @@ namespace Subh_sankalp_estate.Controllers
             var plotSize = ParsePlotSize(plot.PlotSize);
             var calculatedTotalPrice = plot.TotalPrice > 0 ? plot.TotalPrice : (plotSize * plot.BasicRate);
             
+            // Get token expiry information if plot is tokened
+            DateTime? tokenExpiryDate = null;
+            if (plot.Status == "Tokened")
+            {
+                var latestTokenReceipt = receipts
+                    .Where(r => r.ReceiptType.ToLower() == "token" && r.Status == "Approved")
+                    .OrderByDescending(r => r.CreatedAt)
+                    .FirstOrDefault();
+                tokenExpiryDate = latestTokenReceipt?.TokenExpiryDate;
+            }
+            
             var result = new PlotResponseDto
             {
                 Id = plot.Id,
@@ -271,7 +317,8 @@ namespace Subh_sankalp_estate.Controllers
                 AssociateName = receipt?.CreatedBy?.FullName ?? string.Empty,
                 ReferenceName = receipt?.ReferenceName ?? string.Empty,
                 ReceivedAmount = totalReceived,
-                CreatedAt = plot.CreatedAt
+                CreatedAt = plot.CreatedAt,
+                TokenExpiryDate = tokenExpiryDate
             };
             
             return Ok(result);
@@ -405,6 +452,184 @@ namespace Subh_sankalp_estate.Controllers
             });
             
             return Ok(result);
+        }
+
+        [HttpGet("tokened")]
+        public async Task<ActionResult<IEnumerable<PlotResponseDto>>> GetTokenedPlots([FromQuery] string? siteName, [FromQuery] string? plotSize)
+        {
+            IQueryable<Plot> query = _context.Plots
+                .Where(p => p.Status == "Tokened");
+            
+            if (!string.IsNullOrEmpty(siteName))
+            {
+                query = query.Where(p => p.SiteName.Contains(siteName));
+            }
+            
+            if (!string.IsNullOrEmpty(plotSize))
+            {
+                query = query.Where(p => p.PlotSize.Contains(plotSize));
+            }
+            
+            var plots = await query
+                .OrderBy(p => p.SiteName)
+                .ThenBy(p => p.PlotNumber)
+                .ToListAsync();
+            
+            // Get token information and customer details for each plot
+            var plotNumbers = plots.Select(p => new { p.SiteName, p.PlotNumber }).ToList();
+            
+            // Get all receipts for these plots using SiteName+PlotNumber matching
+            var allReceipts = await _context.Receipts
+                .Include(r => r.CreatedBy)
+                .Where(r => plotNumbers.Any(p => p.SiteName == r.SiteName && p.PlotNumber == r.PlotVillaNo))
+                .ToListAsync();
+            
+            var result = plots.Select(p => {
+                // Find receipts for this specific plot
+                var plotReceipts = allReceipts
+                    .Where(r => r.SiteName == p.SiteName && r.PlotVillaNo == p.PlotNumber)
+                    .ToList();
+                
+                // Get the latest approved token receipt
+                var latestTokenReceipt = plotReceipts
+                    .Where(r => r.ReceiptType.ToLower() == "token" && r.Status == "Approved")
+                    .OrderByDescending(r => r.CreatedAt)
+                    .FirstOrDefault();
+                
+                // Calculate total price
+                var plotSize = ParsePlotSize(p.PlotSize);
+                var calculatedTotalPrice = p.TotalPrice > 0 ? p.TotalPrice : (plotSize * p.BasicRate);
+                
+                // Get received amount from approved receipts
+                var receivedAmount = plotReceipts
+                    .Where(r => r.Status == "Approved")
+                    .Sum(r => r.TotalAmount > 0 ? r.TotalAmount : r.Amount);
+                
+                return new PlotResponseDto
+                {
+                    Id = p.Id,
+                    SiteName = p.SiteName,
+                    PlotNumber = p.PlotNumber,
+                    PlotSize = p.PlotSize,
+                    BasicRate = p.BasicRate,
+                    TotalPrice = calculatedTotalPrice,
+                    Status = p.Status,
+                    Description = p.Description,
+                    CreatedAt = p.CreatedAt,
+                    TokenExpiryDate = latestTokenReceipt?.TokenExpiryDate,
+                    CustomerName = latestTokenReceipt?.FromName ?? string.Empty,
+                    AssociateName = latestTokenReceipt?.CreatedBy?.FullName ?? string.Empty,
+                    ReferenceName = latestTokenReceipt?.ReferenceName ?? string.Empty,
+                    ReceivedAmount = receivedAmount,
+                    TotalPaid = receivedAmount,
+                    RemainingBalance = calculatedTotalPrice - receivedAmount
+                };
+            });
+            
+            return Ok(result);
+        }
+
+        [HttpGet("expired-tokens")]
+        public async Task<ActionResult<IEnumerable<PlotResponseDto>>> GetExpiredTokenPlots([FromQuery] string? siteName, [FromQuery] string? plotSize)
+        {
+            var currentDate = DateTime.UtcNow;
+            
+            // Find plots that have expired tokens
+            var expiredTokenPlots = await _context.Plots
+                .Where(p => p.Receipts.Any(r => 
+                    r.ReceiptType.ToLower() == "token" && 
+                    r.Status == "Approved" &&
+                    r.TokenExpiryDate.HasValue && 
+                    r.TokenExpiryDate.Value < currentDate))
+                .ToListAsync();
+
+            if (!string.IsNullOrEmpty(siteName))
+            {
+                expiredTokenPlots = expiredTokenPlots.Where(p => p.SiteName.Contains(siteName)).ToList();
+            }
+            
+            if (!string.IsNullOrEmpty(plotSize))
+            {
+                expiredTokenPlots = expiredTokenPlots.Where(p => p.PlotSize.Contains(plotSize)).ToList();
+            }
+            
+            // Get token expiry information for each plot
+            var plotIds = expiredTokenPlots.Select(p => p.Id).ToList();
+            var expiredTokenReceipts = await _context.Receipts
+                .Where(r => r.ReceiptType.ToLower() == "token" && 
+                           r.Status == "Approved" &&
+                           r.TokenExpiryDate.HasValue && 
+                           r.TokenExpiryDate.Value < currentDate &&
+                           plotIds.Contains(r.PlotId ?? 0))
+                .GroupBy(r => r.PlotId)
+                .Select(g => new {
+                    PlotId = g.Key,
+                    LatestTokenExpiry = g.OrderByDescending(r => r.CreatedAt).First().TokenExpiryDate,
+                    CustomerName = g.OrderByDescending(r => r.CreatedAt).First().FromName,
+                    TokenAmount = g.OrderByDescending(r => r.CreatedAt).First().TotalAmount > 0 
+                        ? g.OrderByDescending(r => r.CreatedAt).First().TotalAmount 
+                        : g.OrderByDescending(r => r.CreatedAt).First().Amount
+                })
+                .ToListAsync();
+            
+            var result = expiredTokenPlots.Select(p => {
+                var tokenInfo = expiredTokenReceipts.FirstOrDefault(t => t.PlotId == p.Id);
+                return new PlotResponseDto
+                {
+                    Id = p.Id,
+                    SiteName = p.SiteName,
+                    PlotNumber = p.PlotNumber,
+                    PlotSize = p.PlotSize,
+                    BasicRate = p.BasicRate,
+                    TotalPrice = p.TotalPrice > 0 ? p.TotalPrice : (ParsePlotSize(p.PlotSize) * p.BasicRate),
+                    Status = p.Status,
+                    Description = p.Description,
+                    CreatedAt = p.CreatedAt,
+                    TokenExpiryDate = tokenInfo?.LatestTokenExpiry,
+                    CustomerName = tokenInfo?.CustomerName ?? string.Empty,
+                    ReceivedAmount = tokenInfo?.TokenAmount ?? 0
+                };
+            }).OrderBy(p => p.TokenExpiryDate);
+            
+            return Ok(result);
+        }
+
+        [HttpGet("dashboard/expired-tokens")]
+        public async Task<ActionResult> GetExpiredTokensDashboard()
+        {
+            var currentDate = DateTime.UtcNow;
+            
+            // Get expired tokens count
+            var expiredTokensCount = await _context.Receipts
+                .Where(r => r.ReceiptType.ToLower() == "token" && 
+                           r.Status == "Approved" &&
+                           r.TokenExpiryDate.HasValue && 
+                           r.TokenExpiryDate.Value < currentDate)
+                .CountAsync();
+            
+            // Get tokens expiring in next 7 days
+            var expiringIn7Days = await _context.Receipts
+                .Where(r => r.ReceiptType.ToLower() == "token" && 
+                           r.Status == "Approved" &&
+                           r.TokenExpiryDate.HasValue && 
+                           r.TokenExpiryDate.Value >= currentDate &&
+                           r.TokenExpiryDate.Value <= currentDate.AddDays(7))
+                .CountAsync();
+            
+            // Get total expired token amount
+            var expiredTokenAmount = await _context.Receipts
+                .Where(r => r.ReceiptType.ToLower() == "token" && 
+                           r.Status == "Approved" &&
+                           r.TokenExpiryDate.HasValue && 
+                           r.TokenExpiryDate.Value < currentDate)
+                .SumAsync(r => r.TotalAmount > 0 ? r.TotalAmount : r.Amount);
+            
+            return Ok(new {
+                ExpiredTokensCount = expiredTokensCount,
+                ExpiringIn7Days = expiringIn7Days,
+                ExpiredTokenAmount = expiredTokenAmount,
+                Message = expiredTokensCount > 0 ? $"{expiredTokensCount} tokens have expired" : "No expired tokens"
+            });
         }
         
         [HttpPost("bulk")]

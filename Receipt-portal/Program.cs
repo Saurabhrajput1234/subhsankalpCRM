@@ -53,6 +53,10 @@ namespace Subh_sankalp_estate
             // Register services
             builder.Services.AddScoped<IJwtService, JwtService>();
             builder.Services.AddScoped<IReceiptService, ReceiptService>();
+            builder.Services.AddScoped<IPlotStatusService, PlotStatusService>();
+            
+            // Register background services
+            builder.Services.AddHostedService<TokenExpiryBackgroundService>();
 
             // CORS
             builder.Services.AddCors(options =>

@@ -218,6 +218,8 @@ const Plots = () => {
     switch (status) {
       case "Available":
         return "bg-green-100 text-green-800";
+      case "Tokened":
+        return "bg-orange-100 text-orange-800";
       case "Booked":
         return "bg-yellow-100 text-yellow-800";
       case "Sold":
@@ -384,7 +386,8 @@ const Plots = () => {
 
   // Helper function to determine if plot can have booking receipt
   const canCreateBookingReceipt = (plot) => {
-    // Show booking receipt button until received money equals total plot amount
+    // Show booking receipt button for Tokened and Booked plots until fully paid
+    const isTokened = plot.status === "Tokened";
     const isBooked = plot.status === "Booked";
     const isAdmin = user?.role === "Admin";
 
@@ -396,7 +399,7 @@ const Plots = () => {
     // Also check remaining balance as backup
     const hasRemainingBalance = plot.remainingBalance > 0;
 
-    return isBooked && isAdmin && (isNotFullyPaid || hasRemainingBalance);
+    return (isTokened || isBooked) && isAdmin && (isNotFullyPaid || hasRemainingBalance);
   };
 
   return (
@@ -486,6 +489,7 @@ const Plots = () => {
                 >
                   <option value="">All Status</option>
                   <option value="Available">Available</option>
+                  <option value="Tokened">Tokened</option>
                   <option value="Booked">Booked</option>
                   <option value="Sold">Sold</option>
                 </select>
@@ -567,6 +571,36 @@ const Plots = () => {
                 </p>
                 {filters.status === "Available" && (
                   <p className="text-xs text-green-600 font-medium">
+                    ✓ Filtered
+                  </p>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div
+          className={`card cursor-pointer transition-all duration-200 hover:shadow-lg ${
+            filters.status === "Tokened"
+              ? "ring-2 ring-orange-500 bg-orange-50"
+              : "hover:bg-gray-50"
+          }`}
+          onClick={() => handleStatusFilter("Tokened")}
+        >
+          <div className="card-content">
+            <div className="flex items-center">
+              <div className="flex-shrink-0">
+                <MapPin className="h-8 w-8 text-orange-600" />
+              </div>
+              <div className="ml-4">
+                <p className="text-sm font-medium text-gray-500">
+                  Tokened Plots
+                </p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {allPlots.filter((p) => p.status === "Tokened").length}
+                </p>
+                {filters.status === "Tokened" && (
+                  <p className="text-xs text-orange-600 font-medium">
                     ✓ Filtered
                   </p>
                 )}
@@ -838,6 +872,53 @@ const Plots = () => {
                       </div>
                     </>
                   )}
+                </div>
+              </div>
+            )}
+
+            {/* Token Information for Tokened Plots */}
+            {selectedPlot.status === "Tokened" && (
+              <div className="bg-orange-50 p-4 rounded-lg border border-orange-200">
+                <h4 className="font-medium text-orange-900 mb-3">
+                  Token Information
+                </h4>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-orange-700">
+                      Token Amount
+                    </label>
+                    <p className="mt-1 text-sm text-orange-900 font-medium">
+                      {selectedPlot.receivedAmount && selectedPlot.receivedAmount > 0
+                        ? formatCurrency(selectedPlot.receivedAmount)
+                        : "₹0"}
+                    </p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-orange-700">
+                      Token Expiry Date
+                    </label>
+                    <p className="mt-1 text-sm text-orange-900 font-medium">
+                      {selectedPlot.tokenExpiryDate
+                        ? formatDate(selectedPlot.tokenExpiryDate)
+                        : "Not available"}
+                    </p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-orange-700">
+                      Customer Name
+                    </label>
+                    <p className="mt-1 text-sm text-orange-900">
+                      {selectedPlot.customerName || "Not available"}
+                    </p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-orange-700">
+                      Associate
+                    </label>
+                    <p className="mt-1 text-sm text-orange-900">
+                      {selectedPlot.associateName || "Not available"}
+                    </p>
+                  </div>
                 </div>
               </div>
             )}

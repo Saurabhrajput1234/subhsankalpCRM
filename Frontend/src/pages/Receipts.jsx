@@ -350,6 +350,7 @@ const Receipts = () => {
                   <option value="Pending">Pending</option>
                   <option value="Approved">Approved</option>
                   <option value="Rejected">Rejected</option>
+                  <option value="Expired">Expired</option>
                 </select>
               </div>
               <div>

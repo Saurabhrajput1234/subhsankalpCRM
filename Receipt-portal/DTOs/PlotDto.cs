@@ -34,6 +34,8 @@ namespace Subh_sankalp_estate.DTOs
         public string ReferenceName { get; set; } = string.Empty;
         public decimal ReceivedAmount { get; set; }
         public DateTime CreatedAt { get; set; }
+        public DateTime? TokenExpiryDate { get; set; }
+        public decimal PaymentPercentage { get; set; }
     }
     
     public class UpdatePlotDto

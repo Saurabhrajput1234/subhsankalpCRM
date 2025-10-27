@@ -16,11 +16,13 @@ namespace Subh_sankalp_estate.Controllers
     {
         private readonly ApplicationDbContext _context;
         private readonly IReceiptService _receiptService;
+        private readonly IPlotStatusService _plotStatusService;
         
-        public ReceiptsController(ApplicationDbContext context, IReceiptService receiptService)
+        public ReceiptsController(ApplicationDbContext context, IReceiptService receiptService, IPlotStatusService plotStatusService)
         {
             _context = context;
             _receiptService = receiptService;
+            _plotStatusService = plotStatusService;
         }
         
         [HttpPost]
@@ -80,50 +82,40 @@ namespace Subh_sankalp_estate.Controllers
                 AdminRemarks = createReceiptDto.AdminRemarks,
                 CreatedByUserId = userId,
                 PlotId = plot.Id,
-                Status = receiptType == "booking" && userRole == "Admin" ? "Approved" : "Pending"
+                Status = userRole == "Admin" ? "Approved" : "Pending"
             };
+            
+            // Calculate TotalAmount for admin-created receipts (auto-approved)
+            if (userRole == "Admin")
+            {
+                var otherAmount = 0m;
+                if (!string.IsNullOrEmpty(receipt.Other))
+                {
+                    if (!decimal.TryParse(receipt.Other, out otherAmount))
+                    {
+                        var numbers = System.Text.RegularExpressions.Regex.Match(receipt.Other, @"\d+\.?\d*");
+                        if (numbers.Success)
+                        {
+                            decimal.TryParse(numbers.Value, out otherAmount);
+                        }
+                    }
+                }
+                receipt.TotalAmount = receipt.Amount + otherAmount;
+                receipt.ApprovedByUserId = userId;
+                receipt.ApprovedAt = DateTime.UtcNow;
+            }
             
             _context.Receipts.Add(receipt);
             await _context.SaveChangesAsync();
             
-            // Update plot received amount and status after creating receipt
+            // Update plot status only if receipt is approved immediately (receipts created by admin)
+            if (receipt.Status == "Approved")
+            {
+                await _plotStatusService.UpdatePlotStatusAsync(plot.Id, receiptType, receipt.TotalAmount);
+            }
+            
+            // Update plot received amount after creating receipt
             await UpdatePlotReceivedAmountByPlotNumberAsync(createReceiptDto.SiteName, createReceiptDto.PlotVillaNo);
-            
-            // Update plot status based on receipt type
-            if (receiptType == "token")
-            {
-                plot.Status = "Booked";
-            }
-            // For booking receipts, check if total received amount reaches 60% of total price
-            else if (receiptType == "booking")
-            {
-                // Calculate total received amount including this payment
-                // Include ALL approved receipts + pending token receipts
-                var approvedReceiptsTotal = await _context.Receipts
-                    .Where(r => r.PlotId == plot.Id && r.Status == "Approved")
-                    .SumAsync(r => r.TotalAmount > 0 ? r.TotalAmount : r.Amount);
-                
-                var pendingTokenReceiptsTotal = await _context.Receipts
-                    .Where(r => r.PlotId == plot.Id && r.Status == "Pending" && r.ReceiptType == "token")
-                    .SumAsync(r => r.TotalAmount > 0 ? r.TotalAmount : r.Amount);
-                
-                var totalReceived = approvedReceiptsTotal + pendingTokenReceiptsTotal;
-                
-                var percentage = plot.TotalPrice > 0 ? (totalReceived / plot.TotalPrice) * 100 : 0;
-                
-                // Only mark as "Sold" when 100% payment is reached
-                if (percentage >= 100)
-                {
-                    plot.Status = "Sold";
-                }
-                else if (percentage > 0)
-                {
-                    plot.Status = "Booked"; // Keep as "Booked" until fully paid
-                }
-            }
-            
-            plot.UpdatedAt = DateTime.UtcNow;
-            await _context.SaveChangesAsync();
             
             return Ok(await GetReceiptResponse(receipt.Id));
         }
@@ -409,6 +401,12 @@ namespace Subh_sankalp_estate.Controllers
             // Update plot received amount after approval
             await UpdatePlotReceivedAmountByPlotNumberAsync(receipt.SiteName, receipt.PlotVillaNo);
             
+            // Update plot status after approval using PlotStatusService
+            if (receipt.Plot != null)
+            {
+                await _plotStatusService.UpdatePlotStatusAsync(receipt.Plot.Id, receipt.ReceiptType, receipt.TotalAmount);
+            }
+            
             // Check values after update
             var updatedReceipt = await _context.Receipts.FindAsync(receipt.Id);
             var updatedPlot = await _context.Plots.FindAsync(receipt.Plot?.Id);
@@ -448,6 +446,15 @@ namespace Subh_sankalp_estate.Controllers
             
             // Update plot received amount after rejection
             await UpdatePlotReceivedAmountByPlotNumberAsync(receipt.SiteName, receipt.PlotVillaNo);
+            
+            // Recalculate plot status after rejection
+            if (receipt.Plot != null)
+            {
+                var currentStatus = await _plotStatusService.CalculatePlotStatusAsync(receipt.Plot.Id);
+                receipt.Plot.Status = currentStatus;
+                receipt.Plot.UpdatedAt = DateTime.UtcNow;
+                await _context.SaveChangesAsync();
+            }
             
             return Ok();
         }
@@ -567,7 +574,7 @@ namespace Subh_sankalp_estate.Controllers
             var receipts = await _context.Receipts
                 .Include(r => r.CreatedBy)
                 .Where(r => r.ReceiptType == "token" && 
-                           r.Status == "Pending" &&
+                           r.Status == "Approved" &&
                            r.TokenExpiryDate <= expiryDate)
                 .OrderBy(r => r.TokenExpiryDate)
                 .ToListAsync();
@@ -589,6 +596,50 @@ namespace Subh_sankalp_estate.Controllers
             });
             
             return Ok(result);
+        }
+
+        [HttpGet("expired-tokens")]
+        [Authorize(Roles = "Admin")]
+        public async Task<ActionResult<IEnumerable<ReceiptResponseDto>>> GetExpiredTokens()
+        {
+            var receipts = await _context.Receipts
+                .Include(r => r.CreatedBy)
+                .Where(r => r.ReceiptType == "token" && r.Status == "Expired")
+                .OrderByDescending(r => r.TokenExpiryDate)
+                .ToListAsync();
+            
+            var result = receipts.Select(r => new ReceiptResponseDto
+            {
+                Id = r.Id,
+                ReceiptNo = r.ReceiptNo,
+                FromName = r.FromName,
+                Mobile = r.Mobile,
+                ReferenceName = r.ReferenceName,
+                SiteName = r.SiteName,
+                PlotVillaNo = r.PlotVillaNo,
+                TokenExpiryDate = r.TokenExpiryDate,
+                Amount = r.Amount,
+                Status = r.Status,
+                CreatedByName = r.CreatedBy.FullName,
+                CreatedAt = r.CreatedAt
+            });
+            
+            return Ok(result);
+        }
+
+        [HttpPost("process-expired-tokens")]
+        [Authorize(Roles = "Admin")]
+        public async Task<ActionResult> ProcessExpiredTokens()
+        {
+            try
+            {
+                await _plotStatusService.CheckAndUpdateExpiredTokensAsync();
+                return Ok(new { message = "Expired tokens processed successfully" });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Error processing expired tokens", error = ex.Message });
+            }
         }
 
         [HttpGet("plot/{plotId}")]
@@ -735,13 +786,12 @@ namespace Subh_sankalp_estate.Controllers
                 Console.WriteLine($"  Receipt {r.ReceiptNo}: Status={r.Status}, Amount=₹{r.Amount}, TotalAmount=₹{r.TotalAmount}");
             }
 
-            // Calculate total received amount from RECEIPT AMOUNTS (not plot price)
-            // Include: Approved receipts (all types) + Pending token receipts (actual money received)
+            // Calculate total received amount from APPROVED RECEIPTS ONLY
+            // Only count approved receipts - pending receipts don't count as received money
             var totalReceivedAmount = await _context.Receipts
                 .Where(r => r.SiteName == siteName && r.PlotVillaNo == plotNumber &&
-                           (r.Status == "Approved" || 
-                            (r.Status == "Pending" && r.ReceiptType == "token")))
-                .SumAsync(r => r.TotalAmount > 0 ? r.TotalAmount : r.Amount); // Use receipt amounts only
+                           r.Status == "Approved")
+                .SumAsync(r => r.TotalAmount > 0 ? r.TotalAmount : r.Amount);
 
             Console.WriteLine($"Calculated total received amount: ₹{totalReceivedAmount}");
 
@@ -757,27 +807,8 @@ namespace Subh_sankalp_estate.Controllers
             }
             // Note: If TotalPrice is already set (e.g., after discount), we keep it as-is
 
-            // Update status based on received amount vs total price
-            if (plot.TotalPrice > 0)
-            {
-                if (totalReceivedAmount >= plot.TotalPrice)
-                {
-                    plot.Status = "Sold";
-                }
-                else if (totalReceivedAmount > 0)
-                {
-                    plot.Status = "Booked";
-                }
-                else
-                {
-                    plot.Status = "Available";
-                }
-            }
-            else
-            {
-                // If total price is not set, use simple logic
-                plot.Status = totalReceivedAmount > 0 ? "Booked" : "Available";
-            }
+            // Note: Plot status is now managed by PlotStatusService, not here
+            // This method only updates the received amount
 
             plot.UpdatedAt = DateTime.UtcNow;
             

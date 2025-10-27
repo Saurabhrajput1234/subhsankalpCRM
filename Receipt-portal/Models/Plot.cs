@@ -28,7 +28,7 @@ namespace Subh_sankalp_estate.Models
         [Column(TypeName = "decimal(18,2)")]
         public decimal ReceivedAmount { get; set; } = 0;
         
-        public string Status { get; set; } = "Available"; // Available, Booked, Sold
+        public string Status { get; set; } = "Available"; // Available, Tokened, Booked, Sold
         
         public string Description { get; set; } = string.Empty;
         

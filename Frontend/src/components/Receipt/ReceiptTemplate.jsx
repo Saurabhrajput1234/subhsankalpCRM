@@ -2,6 +2,10 @@ import { formatDate } from "../../utils/helpers";
 import { numberToWords } from "../../utils/numberToWords";
 
 const ReceiptTemplate = ({ receipt }) => {
+  // Debug: Log the receipt data to see what we're getting
+  console.log('ReceiptTemplate received receipt data:', receipt);
+  console.log('Receipt type:', receipt?.receiptType);
+  
   // All receipts now use 4-digit format after database migration
   const getReceiptNumber = (receiptNo) => {
     return receiptNo || "0001";
@@ -247,7 +251,7 @@ const ReceiptTemplate = ({ receipt }) => {
               boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
             }}
           >
-            TOKEN RECEIPT
+            {receipt.receiptType?.toUpperCase() === 'BOOKING' ? 'BOOKING RECEIPT' : 'TOKEN RECEIPT'}
           </div>
 
           {/* Main Content */}
@@ -294,20 +298,22 @@ const ReceiptTemplate = ({ receipt }) => {
                   {formatDate(receipt.date)}
                 </span>
               </div>
-              <div>
-                <strong>Token Expiry Date:</strong>
-                <span
-                  style={{
-                    borderBottom: "1px dotted #000",
-                    display: "inline-block",
-                    minWidth: "100px",
-                    paddingLeft: "8px",
-                    fontWeight: "normal",
-                  }}
-                >
-                  {formatDate(receipt.tokenExpiryDate)}
-                </span>
-              </div>
+              {receipt.receiptType?.toLowerCase() === 'token' && (
+                <div>
+                  <strong>Token Expiry Date:</strong>
+                  <span
+                    style={{
+                      borderBottom: "1px dotted #000",
+                      display: "inline-block",
+                      minWidth: "100px",
+                      paddingLeft: "8px",
+                      fontWeight: "normal",
+                    }}
+                  >
+                    {formatDate(receipt.tokenExpiryDate)}
+                  </span>
+                </div>
+              )}
             </div>
 
             {/* Customer Info Row */}
@@ -631,12 +637,23 @@ const ReceiptTemplate = ({ receipt }) => {
               Terms & Conditions
             </div>
             <div style={{ fontSize: "12px", lineHeight: "1.5" }}>
-              <div>1. Token amount will be expire after 7 days</div>
-              <div>2. Refund applicable within 7 days only</div>
-              <div>
-                3. After token expires, amount can be adjusted only in the next
-                booking (Self referral), not refunded.
-              </div>
+              {receipt.receiptType?.toLowerCase() === 'token' ? (
+                <>
+                  <div>1. Token amount will be expire after 7 days</div>
+                  <div>2. Refund applicable within 7 days only</div>
+                  <div>
+                    3. After token expires, amount can be adjusted only in the next
+                    booking (Self referral), not refunded.
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div>1. This is a booking receipt for plot reservation</div>
+                  <div>2. Balance amount to be paid as per payment schedule</div>
+                  <div>3. Plot will be registered after 60% payment completion</div>
+                  <div>4. All payments are subject to company terms and conditions</div>
+                </>
+              )}
             </div>
           </div>
 

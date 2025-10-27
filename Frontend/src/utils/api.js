@@ -59,6 +59,8 @@ export const receiptsAPI = {
   rejectReceipt: (id, data) => api.post(`/receipts/${id}/reject`, data),
   searchReceipts: (searchTerm) => api.get(`/receipts/search?searchTerm=${searchTerm}`),
   getExpiringTokens: (days) => api.get(`/receipts/expiring-tokens?days=${days}`),
+  getExpiredTokens: () => api.get('/receipts/expired-tokens'),
+  processExpiredTokens: () => api.post('/receipts/process-expired-tokens'),
   getCustomerReceipts: () => api.get('/receipts/customer'),
   getReceiptsByPlot: (plotId) => api.get(`/receipts/plot/${plotId}`),
 };
@@ -72,6 +74,8 @@ export const plotsAPI = {
   updatePlot: (id, data) => api.put(`/plots/${id}`, data),
   deletePlot: (id) => api.delete(`/plots/${id}`),
   getAvailablePlots: (params) => api.get('/plots/available', { params }),
+  getExpiredTokenPlots: (params) => api.get('/plots/expired-tokens', { params }),
+  getExpiredTokensDashboard: () => api.get('/plots/dashboard/expired-tokens'),
   updatePlotStatus: (id, status) => api.patch(`/plots/${id}/status`, { status }),
 };
 
