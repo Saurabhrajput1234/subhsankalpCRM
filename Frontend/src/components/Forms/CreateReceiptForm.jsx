@@ -25,8 +25,12 @@ const CreateReceiptForm = ({ isOpen, onClose, onSuccess }) => {
     setValue
   } = useForm({
     defaultValues: {
+      receiptType: 'token',
       date: new Date().toISOString().split('T')[0], // Today's date
-      tokenExpiryDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] // +7 days from today
+      tokenExpiryDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // +7 days from today
+      panNumber: '',
+      aadharNumber: '',
+      companyName: ''
     }
   });
 
@@ -188,8 +192,12 @@ const CreateReceiptForm = ({ isOpen, onClose, onSuccess }) => {
 
   const handleClose = () => {
     reset({
+      receiptType: 'token',
       date: new Date().toISOString().split('T')[0],
-      tokenExpiryDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+      tokenExpiryDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+      panNumber: '',
+      aadharNumber: '',
+      companyName: ''
     });
     setSelectedPlot(null);
     setAmountInWords('');
@@ -308,6 +316,41 @@ const CreateReceiptForm = ({ isOpen, onClose, onSuccess }) => {
                     className="input"
                     placeholder="Enter relation name"
                   />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    PAN Number
+                  </label>
+                  <input
+                    {...register('panNumber')}
+                    type="text"
+                    className="input"
+                    placeholder="Enter PAN number"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Aadhar Number
+                  </label>
+                  <input
+                    {...register('aadharNumber')}
+                    type="text"
+                    className="input"
+                    placeholder="Enter Aadhar number"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Company Name
+                  </label>
+                  <select {...register('companyName')} className="input">
+                    <option value="">Select Company</option>
+                    <option value="Subhsankalp">Subhsankalp</option>
+                    <option value="Golden City">Golden City</option>
+                  </select>
                 </div>
               </div>
             </div>
@@ -464,6 +507,23 @@ const CreateReceiptForm = ({ isOpen, onClose, onSuccess }) => {
             <div>
               <h4 className="text-md font-medium text-gray-900 mb-4">Payment Information</h4>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Receipt Type */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Receipt Type *
+                  </label>
+                  <select 
+                    {...register('receiptType', { required: 'Receipt type is required' })} 
+                    className="input"
+                  >
+                    <option value="token">Token Receipt</option>
+                    <option value="booking">Booking Receipt</option>
+                  </select>
+                  {errors.receiptType && (
+                    <p className="mt-1 text-sm text-red-600">{errors.receiptType.message}</p>
+                  )}
+                </div>
+
                 {/* Date Field */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">

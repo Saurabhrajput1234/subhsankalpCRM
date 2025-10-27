@@ -33,6 +33,8 @@ const Receipts = () => {
     referenceName: "",
     siteName: "",
     status: "",
+    receiptType: "",
+    companyName: "",
     fromDate: "",
     toDate: "",
   });
@@ -170,6 +172,16 @@ const Receipts = () => {
       key: "receiptNo",
       title: "Receipt No",
       sortable: true,
+    },
+    {
+      key: "receiptType",
+      title: "Type",
+      sortable: true,
+      render: (value) => (
+        <span className={`badge ${value === 'token' ? 'badge-info' : 'badge-warning'}`}>
+          {value === 'token' ? 'Token' : 'Booking'}
+        </span>
+      ),
     },
     {
       key: "fromName",
@@ -355,6 +367,34 @@ const Receipts = () => {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Receipt Type
+                </label>
+                <select
+                  value={filters.receiptType}
+                  onChange={(e) => handleFilterChange("receiptType", e.target.value)}
+                  className="input"
+                >
+                  <option value="">All Types</option>
+                  <option value="token">Token Receipt</option>
+                  <option value="booking">Booking Receipt</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Company Name
+                </label>
+                <select
+                  value={filters.companyName}
+                  onChange={(e) => handleFilterChange("companyName", e.target.value)}
+                  className="input"
+                >
+                  <option value="">All Companies</option>
+                  <option value="Subhsankalp">Subhsankalp</option>
+                  <option value="Golden City">Golden City</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
                   From Date
                 </label>
                 <input
@@ -418,6 +458,16 @@ const Receipts = () => {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700">
+                  Receipt Type
+                </label>
+                <p className="mt-1">
+                  <span className={`badge ${selectedReceipt.receiptType === 'token' ? 'badge-info' : 'badge-warning'}`}>
+                    {selectedReceipt.receiptType === 'token' ? 'Token Receipt' : 'Booking Receipt'}
+                  </span>
+                </p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
                   Status
                 </label>
                 <span
@@ -442,6 +492,30 @@ const Receipts = () => {
                 </label>
                 <p className="mt-1 text-sm text-gray-900">
                   {selectedReceipt.mobile}
+                </p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  PAN Number
+                </label>
+                <p className="mt-1 text-sm text-gray-900">
+                  {selectedReceipt.panNumber || 'Not provided'}
+                </p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Aadhar Number
+                </label>
+                <p className="mt-1 text-sm text-gray-900">
+                  {selectedReceipt.aadharNumber || 'Not provided'}
+                </p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Company Name
+                </label>
+                <p className="mt-1 text-sm text-gray-900">
+                  {selectedReceipt.companyName || 'Not specified'}
                 </p>
               </div>
               <div>

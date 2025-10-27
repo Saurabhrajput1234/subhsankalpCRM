@@ -64,6 +64,9 @@ namespace Subh_sankalp_estate.Controllers
                 RelationName = createReceiptDto.RelationName,
                 Address = createReceiptDto.Address,
                 Mobile = createReceiptDto.Mobile,
+                PanNumber = createReceiptDto.PanNumber,
+                AadharNumber = createReceiptDto.AadharNumber,
+                CompanyName = createReceiptDto.CompanyName,
                 TokenExpiryDate = receiptType == "token" ? (createReceiptDto.TokenExpiryDate ?? DateTime.UtcNow.AddDays(30)) : null,
                 ReceivedAmount = createReceiptDto.ReceivedAmount,
                 ReferenceName = createReceiptDto.ReferenceName,
@@ -173,6 +176,11 @@ namespace Subh_sankalp_estate.Controllers
                 query = query.Where(r => r.ReceiptType == filter.ReceiptType);
             }
             
+            if (!string.IsNullOrEmpty(filter.CompanyName))
+            {
+                query = query.Where(r => r.CompanyName == filter.CompanyName);
+            }
+            
             if (filter.FromDate.HasValue)
             {
                 query = query.Where(r => r.Date >= filter.FromDate.Value);
@@ -246,6 +254,9 @@ namespace Subh_sankalp_estate.Controllers
                 RelationName = r.RelationName,
                 Address = r.Address,
                 Mobile = r.Mobile,
+                PanNumber = r.PanNumber,
+                AadharNumber = r.AadharNumber,
+                CompanyName = r.CompanyName,
                 TokenExpiryDate = r.TokenExpiryDate,
                 ReferenceName = r.ReferenceName,
                 SiteName = r.SiteName,
@@ -485,6 +496,9 @@ namespace Subh_sankalp_estate.Controllers
                 ReceiptType = r.ReceiptType,
                 Date = r.Date,
                 FromName = r.FromName,
+                PanNumber = r.PanNumber,
+                AadharNumber = r.AadharNumber,
+                CompanyName = r.CompanyName,
                 ReferenceName = r.ReferenceName,
                 SiteName = r.SiteName,
                 PlotVillaNo = r.PlotVillaNo,
@@ -553,6 +567,9 @@ namespace Subh_sankalp_estate.Controllers
                 Date = r.Date,
                 FromName = r.FromName,
                 Mobile = r.Mobile,
+                PanNumber = r.PanNumber,
+                AadharNumber = r.AadharNumber,
+                CompanyName = r.CompanyName,
                 ReferenceName = r.ReferenceName,
                 SiteName = r.SiteName,
                 PlotVillaNo = r.PlotVillaNo,
@@ -585,6 +602,9 @@ namespace Subh_sankalp_estate.Controllers
                 ReceiptNo = r.ReceiptNo,
                 FromName = r.FromName,
                 Mobile = r.Mobile,
+                PanNumber = r.PanNumber,
+                AadharNumber = r.AadharNumber,
+                CompanyName = r.CompanyName,
                 ReferenceName = r.ReferenceName,
                 SiteName = r.SiteName,
                 PlotVillaNo = r.PlotVillaNo,
@@ -614,6 +634,9 @@ namespace Subh_sankalp_estate.Controllers
                 ReceiptNo = r.ReceiptNo,
                 FromName = r.FromName,
                 Mobile = r.Mobile,
+                PanNumber = r.PanNumber,
+                AadharNumber = r.AadharNumber,
+                CompanyName = r.CompanyName,
                 ReferenceName = r.ReferenceName,
                 SiteName = r.SiteName,
                 PlotVillaNo = r.PlotVillaNo,
@@ -663,6 +686,9 @@ namespace Subh_sankalp_estate.Controllers
                 RelationName = r.RelationName,
                 Address = r.Address,
                 Mobile = r.Mobile,
+                PanNumber = r.PanNumber,
+                AadharNumber = r.AadharNumber,
+                CompanyName = r.CompanyName,
                 TokenExpiryDate = r.TokenExpiryDate,
                 ReferenceName = r.ReferenceName,
                 SiteName = r.SiteName,
@@ -696,6 +722,11 @@ namespace Subh_sankalp_estate.Controllers
                 
             if (receipt == null) return null;
             
+            return MapToReceiptResponseDto(receipt);
+        }
+
+        private static ReceiptResponseDto MapToReceiptResponseDto(Receipt receipt)
+        {
             return new ReceiptResponseDto
             {
                 Id = receipt.Id,
@@ -707,6 +738,9 @@ namespace Subh_sankalp_estate.Controllers
                 RelationName = receipt.RelationName,
                 Address = receipt.Address,
                 Mobile = receipt.Mobile,
+                PanNumber = receipt.PanNumber,
+                AadharNumber = receipt.AadharNumber,
+                CompanyName = receipt.CompanyName,
                 TokenExpiryDate = receipt.TokenExpiryDate,
                 ReferenceName = receipt.ReferenceName,
                 SiteName = receipt.SiteName,
@@ -725,7 +759,7 @@ namespace Subh_sankalp_estate.Controllers
                 AdminDiscount = receipt.AdminDiscount,
                 AdminRemarks = receipt.AdminRemarks,
                 AssociateRemarks = receipt.AssociateRemarks,
-                CreatedByName = receipt.CreatedBy.FullName,
+                CreatedByName = receipt.CreatedBy?.FullName ?? "",
                 CreatedAt = receipt.CreatedAt
             };
         }

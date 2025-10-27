@@ -11,6 +11,7 @@ namespace Subh_sankalp_estate.DTOs
         public string? Mobile { get; set; }
         public string? Status { get; set; } // Pending, Approved, Rejected
         public string? ReceiptType { get; set; } // token, booking
+        public string? CompanyName { get; set; } // Subhsankalp, Golden City
         public DateTime? FromDate { get; set; }
         public DateTime? ToDate { get; set; }
         public DateTime? TokenExpiryFromDate { get; set; }

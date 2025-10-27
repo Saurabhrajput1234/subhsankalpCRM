@@ -31,6 +31,15 @@ namespace Subh_sankalp_estate.Models
         [StringLength(20)]
         public string Mobile { get; set; } = string.Empty;
         
+        [StringLength(20)]
+        public string PanNumber { get; set; } = string.Empty;
+        
+        [StringLength(20)]
+        public string AadharNumber { get; set; } = string.Empty;
+        
+        [StringLength(100)]
+        public string CompanyName { get; set; } = string.Empty;
+        
         public DateTime? TokenExpiryDate { get; set; }
         
         [StringLength(255)]

@@ -19,6 +19,12 @@ namespace Subh_sankalp_estate.DTOs
         [Required]
         public string Mobile { get; set; } = string.Empty;
         
+        public string PanNumber { get; set; } = string.Empty;
+        
+        public string AadharNumber { get; set; } = string.Empty;
+        
+        public string CompanyName { get; set; } = string.Empty;
+        
         public DateTime? TokenExpiryDate { get; set; }
         
         public string ReceivedAmount { get; set; } = string.Empty;
@@ -63,6 +69,9 @@ namespace Subh_sankalp_estate.DTOs
         public string RelationName { get; set; } = string.Empty;
         public string Address { get; set; } = string.Empty;
         public string Mobile { get; set; } = string.Empty;
+        public string PanNumber { get; set; } = string.Empty;
+        public string AadharNumber { get; set; } = string.Empty;
+        public string CompanyName { get; set; } = string.Empty;
         public DateTime? TokenExpiryDate { get; set; }
         public string ReferenceName { get; set; } = string.Empty;
         public string SiteName { get; set; } = string.Empty;

@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Subh_sankalp_estate.Data;
@@ -11,9 +12,11 @@ using Subh_sankalp_estate.Data;
 namespace Subh_sankalp_estate.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251027105443_AddPanAadharAndCompanyNameToReceipt")]
+    partial class AddPanAadharAndCompanyNameToReceipt
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -132,11 +135,6 @@ namespace Subh_sankalp_estate.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
-                    b.Property<string>("AadharNumber")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)");
-
                     b.Property<string>("Address")
                         .IsRequired()
                         .HasColumnType("text");
@@ -204,7 +202,7 @@ namespace Subh_sankalp_estate.Migrations
                         .HasMaxLength(255)
                         .HasColumnType("character varying(255)");
 
-                    b.Property<string>("PanNumber")
+                    b.Property<string>("PanAadhar")
                         .IsRequired()
                         .HasMaxLength(20)
                         .HasColumnType("character varying(20)");
@@ -343,14 +341,14 @@ namespace Subh_sankalp_estate.Migrations
                         new
                         {
                             Id = 1,
-                            CreatedAt = new DateTime(2025, 10, 27, 11, 30, 50, 352, DateTimeKind.Utc).AddTicks(5198),
+                            CreatedAt = new DateTime(2025, 10, 27, 10, 54, 42, 954, DateTimeKind.Utc).AddTicks(4432),
                             Email = "admin@realestate.com",
                             FullName = "System Administrator",
                             IsActive = true,
                             Mobile = "",
-                            PasswordHash = "$2a$11$w7itoHDNWHNkhp1jkTWf2ee5bacMYDQlOqi.2AjQk54jq6MOGV85S",
+                            PasswordHash = "$2a$11$Dmn1D0Gtb4zVGN6O9Mcf8e3ORwAmrKrirIBXK2jXhdFAyTx4zONMK",
                             Role = "Admin",
-                            UpdatedAt = new DateTime(2025, 10, 27, 11, 30, 50, 352, DateTimeKind.Utc).AddTicks(5201),
+                            UpdatedAt = new DateTime(2025, 10, 27, 10, 54, 42, 954, DateTimeKind.Utc).AddTicks(4436),
                             Username = "admin"
                         });
                 });

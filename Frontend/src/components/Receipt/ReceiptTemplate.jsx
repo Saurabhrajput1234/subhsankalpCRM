@@ -8,7 +8,7 @@ const ReceiptTemplate = ({ receipt }) => {
   
   // All receipts now use 4-digit format after database migration
   const getReceiptNumber = (receiptNo) => {
-    return receiptNo || "0001";
+    return receiptNo || "N/A";
   };
 
   return (
@@ -406,6 +406,60 @@ const ReceiptTemplate = ({ receipt }) => {
                   {receipt.referenceName || "Subh Sankalp Estate"}
                 </span>
               </div>
+            </div>
+
+            {/* PAN Number and Aadhar Number Row */}
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                marginBottom: "15px",
+              }}
+            >
+              <div style={{ flex: "1", marginRight: "20px" }}>
+                <strong>PAN Number:</strong>
+                <span
+                  style={{
+                    borderBottom: "1px dotted #000",
+                    display: "inline-block",
+                    minWidth: "150px",
+                    paddingLeft: "8px",
+                    fontWeight: "normal",
+                  }}
+                >
+                  {receipt.panNumber || ""}
+                </span>
+              </div>
+              <div style={{ flex: "1" }}>
+                <strong>Aadhar Number:</strong>
+                <span
+                  style={{
+                    borderBottom: "1px dotted #000",
+                    display: "inline-block",
+                    minWidth: "180px",
+                    paddingLeft: "8px",
+                    fontWeight: "normal",
+                  }}
+                >
+                  {receipt.aadharNumber || ""}
+                </span>
+              </div>
+            </div>
+
+            {/* Company Name Row */}
+            <div style={{ marginBottom: "15px" }}>
+              <strong>Company Name:</strong>
+              <span
+                style={{
+                  borderBottom: "1px dotted #000",
+                  display: "inline-block",
+                  minWidth: "300px",
+                  paddingLeft: "8px",
+                  fontWeight: "normal",
+                }}
+              >
+                {receipt.companyName || ""}
+              </span>
             </div>
 
             {/* Site Name Row */}
