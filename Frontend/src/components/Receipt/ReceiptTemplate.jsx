@@ -172,14 +172,14 @@ const ReceiptTemplate = ({ receipt }) => {
           }
           
           .footer-item {
-            margin-bottom: 5px;
+            margin-bottom: 12px;
             font-size: 11px;
+            line-height: 1.4;
           }
           
           .footer-label {
             font-weight: bold;
-            display: inline-block;
-            width: 150px;
+            color: #333;
           }
         `}
       </style>
@@ -428,20 +428,35 @@ const ReceiptTemplate = ({ receipt }) => {
         {/* Footer Section */}
         <div className="footer-section">
           <div className="footer-item">
-            <MapPin
-              size={12}
-              style={{ display: "inline", marginRight: "5px" }}
-            />
-            <span className="footer-label">Corporate Address:</span>
-            D-99, Ground Floor, D Block, Sector-2, Noida, U.P. 201301
+            <div
+              style={{
+                display: "flex",
+                alignItems: "flex-start",
+                marginBottom: "8px",
+              }}
+            >
+              <MapPin
+                size={12}
+                style={{ marginRight: "5px", marginTop: "2px", flexShrink: 0 }}
+              />
+              <div>
+                <span className="footer-label">Corporate Address:</span> 2/248,
+                Vidhya Marg Vishnu Puri, Aligarh, Uttar Pradesh-202001
+              </div>
+            </div>
           </div>
           <div className="footer-item">
-            <MapPin
-              size={12}
-              style={{ display: "inline", marginRight: "5px" }}
-            />
-            <span className="footer-label">Registered Address:</span>
-            2/248, Vidhya Marg Vishnu Puri, Aligarh, Uttar Pradesh-202001
+            <div style={{ display: "flex", alignItems: "flex-start" }}>
+              <MapPin
+                size={12}
+                style={{ marginRight: "5px", marginTop: "2px", flexShrink: 0 }}
+              />
+              <div>
+                <span className="footer-label">Registered Address:</span> 037UG,
+                BUILDERS SCHEME, OMAXE ARCADE GOLF LINK-1, Alpha Greater Noida,
+                Noida, Gautam Buddha Nagar, Uttar Pradesh - 201310
+              </div>
+            </div>
           </div>
         </div>
       </div>
