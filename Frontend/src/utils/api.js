@@ -60,6 +60,7 @@ export const receiptsAPI = {
   searchReceipts: (searchTerm) => api.get(`/receipts/search?searchTerm=${searchTerm}`),
   getExpiringTokens: (days) => api.get(`/receipts/expiring-tokens?days=${days}`),
   getExpiredTokens: () => api.get('/receipts/expired-tokens'),
+  getConvertedTokens: () => api.get('/receipts/converted-tokens'),
   processExpiredTokens: () => api.post('/receipts/process-expired-tokens'),
   getCustomerReceipts: () => api.get('/receipts/customer'),
   getReceiptsByPlot: (plotId) => api.get(`/receipts/plot/${plotId}`),

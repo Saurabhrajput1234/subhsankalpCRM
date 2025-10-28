@@ -52,6 +52,8 @@ export const getStatusBadgeClass = (status) => {
       return 'badge-danger';
     case 'expired':
       return 'badge-danger';
+    case 'converted':
+      return 'badge-info';
     case 'available':
       return 'badge-success';
     case 'tokened':

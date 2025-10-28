@@ -88,8 +88,11 @@ namespace Subh_sankalp_estate.Services
 
                 if (hasBookingAfterToken)
                 {
-                    // Token should not expire because booking receipt exists
-                    _logger.LogInformation("Token receipt {ReceiptId} for plot {PlotNumber} will not expire - booking receipt exists", 
+                    // Token should get special "Converted" status instead of expiring
+                    tokenReceipt.Status = "Converted";
+                    tokenReceipt.UpdatedAt = DateTime.UtcNow;
+                    
+                    _logger.LogInformation("Token receipt {ReceiptId} for plot {PlotNumber} marked as Converted - booking receipt exists", 
                         tokenReceipt.Id, plot.PlotNumber);
                     continue;
                 }
@@ -133,9 +136,9 @@ namespace Subh_sankalp_estate.Services
 
         private async Task RecalculatePlotReceivedAmountAsync(Models.Plot plot)
         {
-            // Calculate total received amount from APPROVED receipts only (excluding expired)
+            // Calculate total received amount from APPROVED and CONVERTED receipts (excluding expired)
             var totalReceivedAmount = await _context.Receipts
-                .Where(r => r.PlotId == plot.Id && r.Status == "Approved")
+                .Where(r => r.PlotId == plot.Id && (r.Status == "Approved" || r.Status == "Converted"))
                 .SumAsync(r => r.TotalAmount > 0 ? r.TotalAmount : r.Amount);
 
             plot.ReceivedAmount = totalReceivedAmount;
@@ -152,11 +155,11 @@ namespace Subh_sankalp_estate.Services
 
             if (plot == null) return "Available";
 
-            var approvedReceipts = plot.Receipts.Where(r => r.Status == "Approved").ToList();
+            var activeReceipts = plot.Receipts.Where(r => r.Status == "Approved" || r.Status == "Converted").ToList();
             
             // Check for token receipts
-            var tokenReceipts = approvedReceipts.Where(r => r.ReceiptType.ToLower() == "token").ToList();
-            var bookingReceipts = approvedReceipts.Where(r => r.ReceiptType.ToLower() == "booking").ToList();
+            var tokenReceipts = activeReceipts.Where(r => r.ReceiptType.ToLower() == "token").ToList();
+            var bookingReceipts = activeReceipts.Where(r => r.ReceiptType.ToLower() == "booking").ToList();
 
             // If has booking receipts, calculate payment percentage
             if (bookingReceipts.Any())
@@ -186,9 +189,9 @@ namespace Subh_sankalp_estate.Services
 
             if (plot == null || plot.TotalPrice == 0) return 0;
 
-            // Calculate total approved payments
+            // Calculate total approved and converted payments
             var totalPaid = plot.Receipts
-                .Where(r => r.Status == "Approved")
+                .Where(r => r.Status == "Approved" || r.Status == "Converted")
                 .Sum(r => r.TotalAmount);
 
             return (totalPaid / plot.TotalPrice) * 100;

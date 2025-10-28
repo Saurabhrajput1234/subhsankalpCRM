@@ -100,12 +100,7 @@ namespace Subh_sankalp_estate
 
             var app = builder.Build();
 
-            // Seed data
-            using (var scope = app.Services.CreateScope())
-            {
-                var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-                DataSeeder.SeedAsync(context).Wait();
-            }
+
 
             // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())

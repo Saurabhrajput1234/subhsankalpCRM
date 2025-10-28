@@ -137,6 +137,12 @@ namespace Subh_sankalp_estate.Controllers
             if (receipt.Status == "Approved")
             {
                 await _plotStatusService.UpdatePlotStatusAsync(plot.Id, receiptType, receipt.TotalAmount);
+                
+                // If this is a booking receipt, convert any existing approved token receipts to "Converted" status
+                if (receiptType == "booking")
+                {
+                    await ConvertTokenReceiptsToConvertedStatusAsync(plot.Id);
+                }
             }
             
             // Update plot received amount after creating receipt
@@ -354,10 +360,18 @@ namespace Subh_sankalp_estate.Controllers
             receipt.AdminRemarks = approveDto.Remarks;
             receipt.ApprovedByUserId = userId;
             receipt.ApprovedAt = DateTime.UtcNow;
+            receipt.UpdatedAt = DateTime.UtcNow;
             
+            // Update expiry date if extended
             if (approveDto.ExtendedExpiryDate.HasValue)
             {
+                var oldExpiryDate = receipt.TokenExpiryDate;
                 receipt.TokenExpiryDate = approveDto.ExtendedExpiryDate;
+                
+                Console.WriteLine($"=== EXPIRY DATE UPDATE ===");
+                Console.WriteLine($"Original Expiry Date: {oldExpiryDate}");
+                Console.WriteLine($"New Expiry Date: {receipt.TokenExpiryDate}");
+                Console.WriteLine($"=== EXPIRY DATE UPDATE END ===");
             }
             
             // STEP 1: Handle receipt amount (NO DISCOUNT APPLIED HERE)
@@ -411,20 +425,72 @@ namespace Subh_sankalp_estate.Controllers
                 var newTotalPrice = plotSize * newBasicRate;
                 var totalDiscountAmount = currentTotalPrice - newTotalPrice;
                 
-                // Update ONLY the plot (not the receipt)
+                // Update BOTH the plot AND the receipt's basic rate
                 receipt.Plot.BasicRate = newBasicRate;
                 receipt.Plot.TotalPrice = newTotalPrice;
                 receipt.Plot.UpdatedAt = DateTime.UtcNow;
+                
+                // Also update the receipt's basic rate to reflect the discount
+                receipt.BasicRate = newBasicRate;
                 
                 Console.WriteLine($"NEW Basic Rate: ₹{newBasicRate}/sq ft");
                 Console.WriteLine($"NEW Total Price: ₹{newTotalPrice}");
                 Console.WriteLine($"Total Discount Applied: ₹{totalDiscountAmount}");
                 Console.WriteLine($"Receipt Amount Unchanged: ₹{receipt.TotalAmount}");
+                Console.WriteLine($"Receipt Basic Rate Updated: ₹{receipt.BasicRate}/sq ft");
+                
+                // Verify the receipt entity state
+                var receiptEntityEntry = _context.Entry(receipt);
+                Console.WriteLine($"Receipt Entity State: {receiptEntityEntry.State}");
+                Console.WriteLine($"Receipt BasicRate Property Modified: {receiptEntityEntry.Property(r => r.BasicRate).IsModified}");
+                
                 Console.WriteLine($"=== PLOT DISCOUNT END ===");
+            }
+            
+            // Explicitly mark receipt and specific properties as modified to ensure changes are saved
+            var receiptEntry = _context.Entry(receipt);
+            receiptEntry.State = EntityState.Modified;
+            
+            // Explicitly mark the fields we want to update
+            receiptEntry.Property(r => r.Status).IsModified = true;
+            receiptEntry.Property(r => r.AdminDiscount).IsModified = true;
+            receiptEntry.Property(r => r.AdminRemarks).IsModified = true;
+            receiptEntry.Property(r => r.ApprovedByUserId).IsModified = true;
+            receiptEntry.Property(r => r.ApprovedAt).IsModified = true;
+            receiptEntry.Property(r => r.TotalAmount).IsModified = true;
+            receiptEntry.Property(r => r.UpdatedAt).IsModified = true;
+            
+            // Mark BasicRate as modified if discount was applied
+            if (approveDto.Discount.HasValue && approveDto.Discount.Value > 0)
+            {
+                receiptEntry.Property(r => r.BasicRate).IsModified = true;
+                Console.WriteLine($"Explicitly marked BasicRate as modified: ₹{receipt.BasicRate}");
+            }
+            
+            // Mark TokenExpiryDate as modified if extended
+            if (approveDto.ExtendedExpiryDate.HasValue)
+            {
+                receiptEntry.Property(r => r.TokenExpiryDate).IsModified = true;
+                Console.WriteLine($"Explicitly marked TokenExpiryDate as modified: {receipt.TokenExpiryDate}");
             }
             
             // Save changes to the existing receipt (no new receipt created)
             await _context.SaveChangesAsync();
+            
+            Console.WriteLine($"=== RECEIPT UPDATES SAVED ===");
+            Console.WriteLine($"Receipt ID: {receipt.Id}");
+            Console.WriteLine($"Updated Basic Rate: ₹{receipt.BasicRate}");
+            Console.WriteLine($"Updated Expiry Date: {receipt.TokenExpiryDate}");
+            
+            // Verify the receipt was actually saved to database
+            var savedReceipt = await _context.Receipts.AsNoTracking().FirstOrDefaultAsync(r => r.Id == receipt.Id);
+            Console.WriteLine($"Database Verification - Receipt BasicRate: ₹{savedReceipt?.BasicRate}");
+            Console.WriteLine($"Database Verification - Receipt TokenExpiryDate: {savedReceipt?.TokenExpiryDate}");
+            Console.WriteLine($"Database Verification - Receipt Status: {savedReceipt?.Status}");
+            Console.WriteLine($"Database Verification - Receipt AdminDiscount: ₹{savedReceipt?.AdminDiscount}");
+            Console.WriteLine($"Database Verification - Receipt UpdatedAt: {savedReceipt?.UpdatedAt}");
+            
+            Console.WriteLine($"=== RECEIPT UPDATES SAVED END ===");
             
             Console.WriteLine($"=== AFTER SAVE - BEFORE UPDATE ===");
             Console.WriteLine($"Receipt TotalAmount after save: ₹{receipt.TotalAmount}");
@@ -446,7 +512,9 @@ namespace Subh_sankalp_estate.Controllers
             
             Console.WriteLine($"=== AFTER UPDATE METHOD ===");
             Console.WriteLine($"Receipt TotalAmount after update: ₹{updatedReceipt?.TotalAmount}");
+            Console.WriteLine($"Receipt BasicRate after update: ₹{updatedReceipt?.BasicRate}");
             Console.WriteLine($"Plot TotalPrice after update: ₹{updatedPlot?.TotalPrice}");
+            Console.WriteLine($"Plot BasicRate after update: ₹{updatedPlot?.BasicRate}");
             Console.WriteLine($"Plot ReceivedAmount after update: ₹{updatedPlot?.ReceivedAmount}");
             Console.WriteLine($"=== FINAL VALUES ===");
             
@@ -608,13 +676,17 @@ namespace Subh_sankalp_estate.Controllers
         [Authorize(Roles = "Admin")]
         public async Task<ActionResult<IEnumerable<ReceiptResponseDto>>> GetExpiringTokens([FromQuery] int days = 7)
         {
-            var expiryDate = DateTime.UtcNow.AddDays(days);
+            var currentDate = DateTime.UtcNow;
+            var expiryDate = currentDate.AddDays(days);
             
+            // Only show APPROVED tokens (not converted) that will expire within the specified days
             var receipts = await _context.Receipts
                 .Include(r => r.CreatedBy)
                 .Where(r => r.ReceiptType == "token" && 
                            r.Status == "Approved" &&
-                           r.TokenExpiryDate <= expiryDate)
+                           r.TokenExpiryDate.HasValue &&
+                           r.TokenExpiryDate.Value >= currentDate &&
+                           r.TokenExpiryDate.Value <= expiryDate)
                 .OrderBy(r => r.TokenExpiryDate)
                 .ToListAsync();
             
@@ -644,10 +716,48 @@ namespace Subh_sankalp_estate.Controllers
         [Authorize(Roles = "Admin")]
         public async Task<ActionResult<IEnumerable<ReceiptResponseDto>>> GetExpiredTokens()
         {
+            var currentDate = DateTime.UtcNow;
+            
+            // Show ALL tokens that are past their expiry date (both "Expired" and "Converted" that are past expiry)
             var receipts = await _context.Receipts
                 .Include(r => r.CreatedBy)
-                .Where(r => r.ReceiptType == "token" && r.Status == "Expired")
+                .Where(r => r.ReceiptType == "token" && 
+                           r.TokenExpiryDate.HasValue &&
+                           r.TokenExpiryDate.Value < currentDate &&
+                           (r.Status == "Expired" || r.Status == "Converted"))
                 .OrderByDescending(r => r.TokenExpiryDate)
+                .ToListAsync();
+            
+            var result = receipts.Select(r => new ReceiptResponseDto
+            {
+                Id = r.Id,
+                ReceiptNo = r.ReceiptNo,
+                FromName = r.FromName,
+                Mobile = r.Mobile,
+                PanNumber = r.PanNumber,
+                AadharNumber = r.AadharNumber,
+                CompanyName = r.CompanyName,
+                ReferenceName = r.ReferenceName,
+                SiteName = r.SiteName,
+                PlotVillaNo = r.PlotVillaNo,
+                TokenExpiryDate = r.TokenExpiryDate,
+                Amount = r.Amount,
+                Status = r.Status,
+                CreatedByName = r.CreatedBy.FullName,
+                CreatedAt = r.CreatedAt
+            });
+            
+            return Ok(result);
+        }
+
+        [HttpGet("converted-tokens")]
+        [Authorize(Roles = "Admin")]
+        public async Task<ActionResult<IEnumerable<ReceiptResponseDto>>> GetConvertedTokens()
+        {
+            var receipts = await _context.Receipts
+                .Include(r => r.CreatedBy)
+                .Where(r => r.ReceiptType == "token" && r.Status == "Converted")
+                .OrderByDescending(r => r.UpdatedAt)
                 .ToListAsync();
             
             var result = receipts.Select(r => new ReceiptResponseDto
@@ -842,11 +952,11 @@ namespace Subh_sankalp_estate.Controllers
                 Console.WriteLine($"  Receipt {r.ReceiptNo}: Status={r.Status}, Amount=₹{r.Amount}, TotalAmount=₹{r.TotalAmount}");
             }
 
-            // Calculate total received amount from APPROVED RECEIPTS ONLY
-            // Only count approved receipts - pending receipts don't count as received money
+            // Calculate total received amount from APPROVED and CONVERTED RECEIPTS ONLY
+            // Only count approved and converted receipts - pending/expired receipts don't count as received money
             var totalReceivedAmount = await _context.Receipts
                 .Where(r => r.SiteName == siteName && r.PlotVillaNo == plotNumber &&
-                           r.Status == "Approved")
+                           (r.Status == "Approved" || r.Status == "Converted"))
                 .SumAsync(r => r.TotalAmount > 0 ? r.TotalAmount : r.Amount);
 
             Console.WriteLine($"Calculated total received amount: ₹{totalReceivedAmount}");
@@ -886,6 +996,32 @@ namespace Subh_sankalp_estate.Controllers
             if (plot == null) return;
             
             await UpdatePlotReceivedAmountByPlotNumberAsync(plot.SiteName, plot.PlotNumber);
+        }
+
+        /// <summary>
+        /// Converts all approved token receipts for a plot to "Converted" status when a booking receipt is created
+        /// </summary>
+        private async Task ConvertTokenReceiptsToConvertedStatusAsync(int plotId)
+        {
+            var tokenReceipts = await _context.Receipts
+                .Where(r => r.PlotId == plotId && 
+                           r.ReceiptType.ToLower() == "token" && 
+                           r.Status == "Approved")
+                .ToListAsync();
+
+            foreach (var tokenReceipt in tokenReceipts)
+            {
+                tokenReceipt.Status = "Converted";
+                tokenReceipt.UpdatedAt = DateTime.UtcNow;
+                
+                Console.WriteLine($"Token receipt {tokenReceipt.ReceiptNo} converted to 'Converted' status due to booking receipt creation");
+            }
+
+            if (tokenReceipts.Any())
+            {
+                await _context.SaveChangesAsync();
+                Console.WriteLine($"Converted {tokenReceipts.Count} token receipts to 'Converted' status for plot ID {plotId}");
+            }
         }
 
         private static IQueryable<Receipt> ApplyReceiptSorting(IQueryable<Receipt> query, string? sortBy, string? sortOrder)

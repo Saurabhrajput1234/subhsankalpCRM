@@ -36,17 +36,17 @@ const Dashboard = () => {
       setLoading(true);
       
       if (user?.role === 'Admin') {
-        const [statsResponse, expiringResponse, expiredStatsResponse, expiredPlotsResponse] = await Promise.all([
+        const [statsResponse, expiringResponse, expiredStatsResponse, expiredTokensResponse] = await Promise.all([
           dashboardAPI.getStats(),
           receiptsAPI.getExpiringTokens(7),
           plotsAPI.getExpiredTokensDashboard(),
-          plotsAPI.getExpiredTokenPlots({ pageSize: 5 })
+          receiptsAPI.getExpiredTokens()
         ]);
         
         setStats(statsResponse.data);
         setExpiringTokens(expiringResponse.data);
         setExpiredTokensStats(expiredStatsResponse.data);
-        setExpiredTokens(expiredPlotsResponse.data);
+        setExpiredTokens(expiredTokensResponse.data.slice(0, 5)); // Show only first 5
       } else if (user?.role === 'Associate') {
         const receiptsResponse = await receiptsAPI.getReceipts({ 
           page: 1, 
@@ -265,13 +265,13 @@ const Dashboard = () => {
             {/* Expiring Tokens */}
             <div className="card">
               <div className="card-header">
-                <h3 className="text-lg font-medium text-gray-900">Expiring Tokens (7 days)</h3>
+                <h3 className="text-lg font-medium text-gray-900">Expiring Tokens (Next 7 days)</h3>
               </div>
               <div className="card-content">
                 <div className="space-y-3">
                   {expiringTokens.length === 0 ? (
                     <p className="text-sm text-gray-500 text-center py-4">
-                      No tokens expiring soon
+                      No approved tokens expiring in next 7 days
                     </p>
                   ) : (
                     expiringTokens.map((token) => (
@@ -298,21 +298,21 @@ const Dashboard = () => {
             {/* Expired Tokens */}
             <div className="card">
               <div className="card-header">
-                <h3 className="text-lg font-medium text-gray-900">Expired Tokens</h3>
+                <h3 className="text-lg font-medium text-gray-900">Expired & Converted Tokens</h3>
               </div>
               <div className="card-content">
                 <div className="space-y-3">
                   {expiredTokens.length === 0 ? (
                     <p className="text-sm text-gray-500 text-center py-4">
-                      No expired tokens
+                      No expired or converted tokens
                     </p>
                   ) : (
                     expiredTokens.map((token) => (
                       <div key={token.id} className="flex items-center justify-between p-3 bg-red-50 rounded-md">
                         <div>
-                          <p className="text-sm font-medium text-gray-900">{token.customerName}</p>
+                          <p className="text-sm font-medium text-gray-900">{token.fromName}</p>
                           <p className="text-xs text-gray-500">
-                            {token.siteName} - {token.plotNumber}
+                            {token.siteName} - {token.plotVillaNo}
                           </p>
                         </div>
                         <div className="text-right">
@@ -320,9 +320,11 @@ const Dashboard = () => {
                             {formatDate(token.tokenExpiryDate)}
                           </p>
                           <p className="text-xs text-gray-500">
-                            {formatCurrency(token.receivedAmount)}
+                            {formatCurrency(token.amount)}
                           </p>
-                          <span className="badge badge-danger">Expired</span>
+                          <span className={`badge ${token.status === 'Expired' ? 'badge-danger' : 'badge-info'}`}>
+                            {token.status}
+                          </span>
                         </div>
                       </div>
                     ))

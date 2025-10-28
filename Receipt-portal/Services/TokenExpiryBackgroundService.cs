@@ -93,8 +93,11 @@ namespace Subh_sankalp_estate.Services
 
             if (hasBookingAfterToken)
             {
-                // Token should not expire because booking receipt exists
-                _logger.LogInformation("Token receipt {ReceiptId} for plot {PlotNumber} will not expire - booking receipt exists", 
+                // Token should get special "Converted" status instead of expiring
+                tokenReceipt.Status = "Converted";
+                tokenReceipt.UpdatedAt = DateTime.UtcNow;
+                
+                _logger.LogInformation("Token receipt {ReceiptId} for plot {PlotNumber} marked as Converted - booking receipt exists", 
                     tokenReceipt.Id, plot.PlotNumber);
                 return;
             }
@@ -134,9 +137,9 @@ namespace Subh_sankalp_estate.Services
 
         private async Task RecalculatePlotReceivedAmountAsync(ApplicationDbContext context, Models.Plot plot)
         {
-            // Calculate total received amount from APPROVED receipts only (excluding expired)
+            // Calculate total received amount from APPROVED and CONVERTED receipts (excluding expired)
             var totalReceivedAmount = await context.Receipts
-                .Where(r => r.PlotId == plot.Id && r.Status == "Approved")
+                .Where(r => r.PlotId == plot.Id && (r.Status == "Approved" || r.Status == "Converted"))
                 .SumAsync(r => r.TotalAmount > 0 ? r.TotalAmount : r.Amount);
 
             plot.ReceivedAmount = totalReceivedAmount;
