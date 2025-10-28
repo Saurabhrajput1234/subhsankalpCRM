@@ -74,7 +74,6 @@ Write-Host "• Database: Created and seeded with initial data" -ForegroundColor
 
 Write-Host "`n🚀 NEXT STEPS:" -ForegroundColor Cyan
 Write-Host "1. Test your application: dotnet run" -ForegroundColor White
-Write-Host "2. Update Docker configuration if needed" -ForegroundColor White
-Write-Host "3. Deploy to production with PostgreSQL connection string" -ForegroundColor White
+Write-Host "2. Deploy to production with PostgreSQL connection string" -ForegroundColor White
 
 Write-Host "`n✨ Your Receipt Portal is now running on PostgreSQL!" -ForegroundColor Green

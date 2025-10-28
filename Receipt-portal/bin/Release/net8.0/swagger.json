@@ -1,0 +1,2417 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "Subh-sankalp-estate, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null",
+    "version": "1.0"
+  },
+  "paths": {
+    "/api/Auth/login": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "consumes": [
+          "application/json",
+          "text/json",
+          "application/*+json"
+        ],
+        "produces": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "schema": {
+              "$ref": "#/definitions/LoginDto"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "schema": {
+              "$ref": "#/definitions/LoginResponseDto"
+            }
+          }
+        }
+      }
+    },
+    "/api/Auth/customer-login": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "consumes": [
+          "application/json",
+          "text/json",
+          "application/*+json"
+        ],
+        "produces": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "schema": {
+              "$ref": "#/definitions/CustomerLoginDto"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "schema": {
+              "$ref": "#/definitions/LoginResponseDto"
+            }
+          }
+        }
+      }
+    },
+    "/api/Auth/signup": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "consumes": [
+          "application/json",
+          "text/json",
+          "application/*+json"
+        ],
+        "produces": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "schema": {
+              "$ref": "#/definitions/SignupDto"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "schema": {
+              "$ref": "#/definitions/LoginResponseDto"
+            }
+          }
+        }
+      }
+    },
+    "/api/Dashboard/stats": {
+      "get": {
+        "tags": [
+          "Dashboard"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/Dashboard/revenue-by-month": {
+      "get": {
+        "tags": [
+          "Dashboard"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/Dashboard/site-wise-stats": {
+      "get": {
+        "tags": [
+          "Dashboard"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "siteName",
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/Dashboard/associate-performance": {
+      "get": {
+        "tags": [
+          "Dashboard"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "fromDate",
+            "type": "string",
+            "format": "date-time"
+          },
+          {
+            "in": "query",
+            "name": "toDate",
+            "type": "string",
+            "format": "date-time"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/Dashboard/payment-method-stats": {
+      "get": {
+        "tags": [
+          "Dashboard"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "fromDate",
+            "type": "string",
+            "format": "date-time"
+          },
+          {
+            "in": "query",
+            "name": "toDate",
+            "type": "string",
+            "format": "date-time"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/Payments": {
+      "get": {
+        "tags": [
+          "Payments"
+        ],
+        "produces": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "PaymentMethod",
+            "type": "string"
+          },
+          {
+            "in": "query",
+            "name": "TransactionReference",
+            "type": "string"
+          },
+          {
+            "in": "query",
+            "name": "FromDate",
+            "type": "string",
+            "format": "date-time"
+          },
+          {
+            "in": "query",
+            "name": "ToDate",
+            "type": "string",
+            "format": "date-time"
+          },
+          {
+            "in": "query",
+            "name": "MinAmount",
+            "type": "number",
+            "format": "double"
+          },
+          {
+            "in": "query",
+            "name": "MaxAmount",
+            "type": "number",
+            "format": "double"
+          },
+          {
+            "in": "query",
+            "name": "ReceiptId",
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "in": "query",
+            "name": "PlotId",
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "in": "query",
+            "name": "CustomerName",
+            "type": "string"
+          },
+          {
+            "in": "query",
+            "name": "Page",
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "in": "query",
+            "name": "PageSize",
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "in": "query",
+            "name": "SortBy",
+            "type": "string"
+          },
+          {
+            "in": "query",
+            "name": "SortOrder",
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "schema": {
+              "$ref": "#/definitions/PaymentResponseDtoPaginatedResult"
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Payments"
+        ],
+        "consumes": [
+          "application/json",
+          "text/json",
+          "application/*+json"
+        ],
+        "produces": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "schema": {
+              "$ref": "#/definitions/CreatePaymentDto"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "schema": {
+              "$ref": "#/definitions/PaymentResponseDto"
+            }
+          }
+        }
+      }
+    },
+    "/api/Payments/{id}": {
+      "get": {
+        "tags": [
+          "Payments"
+        ],
+        "produces": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "type": "integer",
+            "format": "int32"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "schema": {
+              "$ref": "#/definitions/PaymentResponseDto"
+            }
+          }
+        }
+      }
+    },
+    "/api/Payments/summary": {
+      "get": {
+        "tags": [
+          "Payments"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "fromDate",
+            "type": "string",
+            "format": "date-time"
+          },
+          {
+            "in": "query",
+            "name": "toDate",
+            "type": "string",
+            "format": "date-time"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/Plots/test": {
+      "get": {
+        "tags": [
+          "Plots"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/Plots": {
+      "get": {
+        "tags": [
+          "Plots"
+        ],
+        "produces": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "SiteName",
+            "type": "string"
+          },
+          {
+            "in": "query",
+            "name": "PlotNumber",
+            "type": "string"
+          },
+          {
+            "in": "query",
+            "name": "Status",
+            "type": "string"
+          },
+          {
+            "in": "query",
+            "name": "PlotSize",
+            "type": "string"
+          },
+          {
+            "in": "query",
+            "name": "MinBasicRate",
+            "type": "number",
+            "format": "double"
+          },
+          {
+            "in": "query",
+            "name": "MaxBasicRate",
+            "type": "number",
+            "format": "double"
+          },
+          {
+            "in": "query",
+            "name": "MinTotalPrice",
+            "type": "number",
+            "format": "double"
+          },
+          {
+            "in": "query",
+            "name": "MaxTotalPrice",
+            "type": "number",
+            "format": "double"
+          },
+          {
+            "in": "query",
+            "name": "CustomerName",
+            "type": "string"
+          },
+          {
+            "in": "query",
+            "name": "AssociateName",
+            "type": "string"
+          },
+          {
+            "in": "query",
+            "name": "FromDate",
+            "type": "string",
+            "format": "date-time"
+          },
+          {
+            "in": "query",
+            "name": "ToDate",
+            "type": "string",
+            "format": "date-time"
+          },
+          {
+            "in": "query",
+            "name": "Page",
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "in": "query",
+            "name": "PageSize",
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "in": "query",
+            "name": "SortBy",
+            "type": "string"
+          },
+          {
+            "in": "query",
+            "name": "SortOrder",
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "schema": {
+              "$ref": "#/definitions/PlotResponseDtoPaginatedResult"
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Plots"
+        ],
+        "consumes": [
+          "application/json",
+          "text/json",
+          "application/*+json"
+        ],
+        "produces": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "schema": {
+              "$ref": "#/definitions/CreatePlotDto"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "schema": {
+              "$ref": "#/definitions/PlotResponseDto"
+            }
+          }
+        }
+      }
+    },
+    "/api/Plots/{id}": {
+      "get": {
+        "tags": [
+          "Plots"
+        ],
+        "produces": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "type": "integer",
+            "format": "int32"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "schema": {
+              "$ref": "#/definitions/PlotResponseDto"
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Plots"
+        ],
+        "consumes": [
+          "application/json",
+          "text/json",
+          "application/*+json"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "in": "body",
+            "name": "body",
+            "schema": {
+              "$ref": "#/definitions/UpdatePlotDto"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Plots"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "type": "integer",
+            "format": "int32"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/Plots/available": {
+      "get": {
+        "tags": [
+          "Plots"
+        ],
+        "produces": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "siteName",
+            "type": "string"
+          },
+          {
+            "in": "query",
+            "name": "plotSize",
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/PlotResponseDto"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/Plots/tokened": {
+      "get": {
+        "tags": [
+          "Plots"
+        ],
+        "produces": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "siteName",
+            "type": "string"
+          },
+          {
+            "in": "query",
+            "name": "plotSize",
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/PlotResponseDto"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/Plots/expired-tokens": {
+      "get": {
+        "tags": [
+          "Plots"
+        ],
+        "produces": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "siteName",
+            "type": "string"
+          },
+          {
+            "in": "query",
+            "name": "plotSize",
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/PlotResponseDto"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/Plots/dashboard/expired-tokens": {
+      "get": {
+        "tags": [
+          "Plots"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/Plots/bulk": {
+      "post": {
+        "tags": [
+          "Plots"
+        ],
+        "consumes": [
+          "application/json",
+          "text/json",
+          "application/*+json"
+        ],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "schema": {
+              "$ref": "#/definitions/BulkCreatePlotsDto"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/Plots/{id}/status": {
+      "patch": {
+        "tags": [
+          "Plots"
+        ],
+        "consumes": [
+          "application/json",
+          "text/json",
+          "application/*+json"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "in": "body",
+            "name": "body",
+            "schema": {
+              "$ref": "#/definitions/UpdatePlotStatusDto"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/Plots/initialize-received-amounts": {
+      "post": {
+        "tags": [
+          "Plots"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/Plots/{id}/debug-received-amount": {
+      "get": {
+        "tags": [
+          "Plots"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "type": "integer",
+            "format": "int32"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/Plots/sync-plot-data-from-receipts": {
+      "post": {
+        "tags": [
+          "Plots"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/Plots/recalculate-all-received-amounts": {
+      "post": {
+        "tags": [
+          "Plots"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/Plots/verify-receipt-calculation/{plotId}": {
+      "get": {
+        "tags": [
+          "Plots"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "plotId",
+            "required": true,
+            "type": "integer",
+            "format": "int32"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/Plots/test-receipt-amounts/{plotId}": {
+      "get": {
+        "tags": [
+          "Plots"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "plotId",
+            "required": true,
+            "type": "integer",
+            "format": "int32"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/Plots/explain-received-amount/{plotId}": {
+      "get": {
+        "tags": [
+          "Plots"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "plotId",
+            "required": true,
+            "type": "integer",
+            "format": "int32"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/Plots/basic-rate-discount-analysis/{plotId}": {
+      "get": {
+        "tags": [
+          "Plots"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "plotId",
+            "required": true,
+            "type": "integer",
+            "format": "int32"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/Plots/force-update-plot-amounts": {
+      "post": {
+        "tags": [
+          "Plots"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/Plots/test-approval-with-discount": {
+      "post": {
+        "tags": [
+          "Plots"
+        ],
+        "consumes": [
+          "application/json",
+          "text/json",
+          "application/*+json"
+        ],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "schema": {
+              "$ref": "#/definitions/TestApprovalDto"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/Plots/verify-discount-separation/{plotId}": {
+      "get": {
+        "tags": [
+          "Plots"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "plotId",
+            "required": true,
+            "type": "integer",
+            "format": "int32"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/Plots/check-receipt-amounts/{plotId}": {
+      "get": {
+        "tags": [
+          "Plots"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "plotId",
+            "required": true,
+            "type": "integer",
+            "format": "int32"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/Plots/test-discount-calculation": {
+      "post": {
+        "tags": [
+          "Plots"
+        ],
+        "consumes": [
+          "application/json",
+          "text/json",
+          "application/*+json"
+        ],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "schema": {
+              "$ref": "#/definitions/TestDiscountDto"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/Plots/debug-plot-calculation/{plotId}": {
+      "get": {
+        "tags": [
+          "Plots"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "plotId",
+            "required": true,
+            "type": "integer",
+            "format": "int32"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/Plots/fix-basic-rate-discounts": {
+      "post": {
+        "tags": [
+          "Plots"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/Plots/refresh-plot-received-amounts": {
+      "post": {
+        "tags": [
+          "Plots"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/Plots/plot-receipt-mapping-analysis": {
+      "get": {
+        "tags": [
+          "Plots"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/Receipts": {
+      "post": {
+        "tags": [
+          "Receipts"
+        ],
+        "consumes": [
+          "application/json",
+          "text/json",
+          "application/*+json"
+        ],
+        "produces": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "schema": {
+              "$ref": "#/definitions/CreateReceiptDto"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "schema": {
+              "$ref": "#/definitions/ReceiptResponseDto"
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Receipts"
+        ],
+        "produces": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "CustomerName",
+            "type": "string"
+          },
+          {
+            "in": "query",
+            "name": "ReferenceName",
+            "type": "string"
+          },
+          {
+            "in": "query",
+            "name": "SiteName",
+            "type": "string"
+          },
+          {
+            "in": "query",
+            "name": "PlotNumber",
+            "type": "string"
+          },
+          {
+            "in": "query",
+            "name": "Mobile",
+            "type": "string"
+          },
+          {
+            "in": "query",
+            "name": "Status",
+            "type": "string"
+          },
+          {
+            "in": "query",
+            "name": "ReceiptType",
+            "type": "string"
+          },
+          {
+            "in": "query",
+            "name": "CompanyName",
+            "type": "string"
+          },
+          {
+            "in": "query",
+            "name": "FromDate",
+            "type": "string",
+            "format": "date-time"
+          },
+          {
+            "in": "query",
+            "name": "ToDate",
+            "type": "string",
+            "format": "date-time"
+          },
+          {
+            "in": "query",
+            "name": "TokenExpiryFromDate",
+            "type": "string",
+            "format": "date-time"
+          },
+          {
+            "in": "query",
+            "name": "TokenExpiryToDate",
+            "type": "string",
+            "format": "date-time"
+          },
+          {
+            "in": "query",
+            "name": "MinAmount",
+            "type": "number",
+            "format": "double"
+          },
+          {
+            "in": "query",
+            "name": "MaxAmount",
+            "type": "number",
+            "format": "double"
+          },
+          {
+            "in": "query",
+            "name": "CreatedByUserId",
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "in": "query",
+            "name": "CashPayment",
+            "type": "boolean"
+          },
+          {
+            "in": "query",
+            "name": "ChequePayment",
+            "type": "boolean"
+          },
+          {
+            "in": "query",
+            "name": "ChequeNo",
+            "type": "string"
+          },
+          {
+            "in": "query",
+            "name": "Page",
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "in": "query",
+            "name": "PageSize",
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "in": "query",
+            "name": "SortBy",
+            "type": "string"
+          },
+          {
+            "in": "query",
+            "name": "SortOrder",
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "schema": {
+              "$ref": "#/definitions/ReceiptResponseDtoPaginatedResult"
+            }
+          }
+        }
+      }
+    },
+    "/api/Receipts/{id}": {
+      "get": {
+        "tags": [
+          "Receipts"
+        ],
+        "produces": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "type": "integer",
+            "format": "int64"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "schema": {
+              "$ref": "#/definitions/ReceiptResponseDto"
+            }
+          }
+        }
+      }
+    },
+    "/api/Receipts/{id}/approve": {
+      "post": {
+        "tags": [
+          "Receipts"
+        ],
+        "consumes": [
+          "application/json",
+          "text/json",
+          "application/*+json"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "in": "body",
+            "name": "body",
+            "schema": {
+              "$ref": "#/definitions/ApproveReceiptDto"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/Receipts/{id}/reject": {
+      "post": {
+        "tags": [
+          "Receipts"
+        ],
+        "consumes": [
+          "application/json",
+          "text/json",
+          "application/*+json"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "in": "body",
+            "name": "body",
+            "schema": {
+              "$ref": "#/definitions/ApproveReceiptDto"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/Receipts/customer": {
+      "get": {
+        "tags": [
+          "Receipts"
+        ],
+        "produces": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/ReceiptResponseDto"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/Receipts/search": {
+      "get": {
+        "tags": [
+          "Receipts"
+        ],
+        "produces": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "searchTerm",
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/ReceiptResponseDto"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/Receipts/expiring-tokens": {
+      "get": {
+        "tags": [
+          "Receipts"
+        ],
+        "produces": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "days",
+            "type": "integer",
+            "format": "int32",
+            "default": 7
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/ReceiptResponseDto"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/Receipts/expired-tokens": {
+      "get": {
+        "tags": [
+          "Receipts"
+        ],
+        "produces": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/ReceiptResponseDto"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/Receipts/converted-tokens": {
+      "get": {
+        "tags": [
+          "Receipts"
+        ],
+        "produces": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/ReceiptResponseDto"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/Receipts/process-expired-tokens": {
+      "post": {
+        "tags": [
+          "Receipts"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/Receipts/plot/{plotId}": {
+      "get": {
+        "tags": [
+          "Receipts"
+        ],
+        "produces": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "plotId",
+            "required": true,
+            "type": "integer",
+            "format": "int32"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/ReceiptResponseDto"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/Users": {
+      "get": {
+        "tags": [
+          "Users"
+        ],
+        "produces": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "schema": {
+              "type": "array",
+              "items": { }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Users"
+        ],
+        "consumes": [
+          "application/json",
+          "text/json",
+          "application/*+json"
+        ],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "schema": {
+              "$ref": "#/definitions/CreateUserDto"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/Users/{id}": {
+      "get": {
+        "tags": [
+          "Users"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "type": "integer",
+            "format": "int32"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Users"
+        ],
+        "consumes": [
+          "application/json",
+          "text/json",
+          "application/*+json"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "in": "body",
+            "name": "body",
+            "schema": {
+              "$ref": "#/definitions/UpdateUserDto"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Users"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "type": "integer",
+            "format": "int32"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "ApproveReceiptDto": {
+      "type": "object",
+      "properties": {
+        "discount": {
+          "format": "double",
+          "type": "number"
+        },
+        "remarks": {
+          "type": "string"
+        },
+        "extendedExpiryDate": {
+          "format": "date-time",
+          "type": "string"
+        }
+      }
+    },
+    "BulkCreatePlotsDto": {
+      "required": [
+        "plots",
+        "siteName"
+      ],
+      "type": "object",
+      "properties": {
+        "siteName": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "plots": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/BulkPlotDataDto"
+          }
+        }
+      }
+    },
+    "BulkPlotDataDto": {
+      "required": [
+        "basicRate",
+        "plotNumber",
+        "plotSize"
+      ],
+      "type": "object",
+      "properties": {
+        "plotNumber": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "plotSize": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "basicRate": {
+          "format": "double",
+          "type": "number"
+        }
+      }
+    },
+    "CreatePaymentDto": {
+      "type": "object",
+      "properties": {
+        "amount": {
+          "format": "double",
+          "type": "number"
+        },
+        "paymentMethod": {
+          "type": "string"
+        },
+        "transactionReference": {
+          "type": "string"
+        },
+        "paymentDate": {
+          "format": "date-time",
+          "type": "string"
+        },
+        "remarks": {
+          "type": "string"
+        },
+        "receiptId": {
+          "format": "int64",
+          "type": "integer"
+        }
+      }
+    },
+    "CreatePlotDto": {
+      "required": [
+        "plotNumber",
+        "siteName"
+      ],
+      "type": "object",
+      "properties": {
+        "siteName": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "plotNumber": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "plotSize": {
+          "type": "string"
+        },
+        "basicRate": {
+          "format": "double",
+          "type": "number"
+        },
+        "description": {
+          "type": "string"
+        }
+      }
+    },
+    "CreateReceiptDto": {
+      "required": [
+        "address",
+        "fromName",
+        "mobile",
+        "plotVillaNo",
+        "siteName"
+      ],
+      "type": "object",
+      "properties": {
+        "receiptType": {
+          "type": "string"
+        },
+        "fromName": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "relationType": {
+          "type": "string"
+        },
+        "relationName": {
+          "type": "string"
+        },
+        "address": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "mobile": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "panNumber": {
+          "type": "string"
+        },
+        "aadharNumber": {
+          "type": "string"
+        },
+        "companyName": {
+          "type": "string"
+        },
+        "tokenExpiryDate": {
+          "format": "date-time",
+          "type": "string"
+        },
+        "receivedAmount": {
+          "type": "string"
+        },
+        "referenceName": {
+          "type": "string"
+        },
+        "siteName": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "plotVillaNo": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "amount": {
+          "format": "double",
+          "type": "number"
+        },
+        "other": {
+          "type": "string"
+        },
+        "cashChecked": {
+          "type": "boolean"
+        },
+        "chequeChecked": {
+          "type": "boolean"
+        },
+        "rtgsChecked": {
+          "type": "boolean"
+        },
+        "chequeNo": {
+          "type": "string"
+        },
+        "rtgsNeft": {
+          "type": "string"
+        },
+        "associateRemarks": {
+          "type": "string"
+        },
+        "adminRemarks": {
+          "type": "string"
+        },
+        "plotId": {
+          "format": "int32",
+          "type": "integer"
+        }
+      }
+    },
+    "CreateUserDto": {
+      "required": [
+        "email",
+        "fullName",
+        "password",
+        "role",
+        "username"
+      ],
+      "type": "object",
+      "properties": {
+        "username": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "email": {
+          "format": "email",
+          "minLength": 1,
+          "type": "string"
+        },
+        "password": {
+          "minLength": 6,
+          "type": "string"
+        },
+        "fullName": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "mobile": {
+          "type": "string"
+        },
+        "role": {
+          "minLength": 1,
+          "type": "string"
+        }
+      }
+    },
+    "CustomerLoginDto": {
+      "required": [
+        "password",
+        "plotNumber",
+        "siteName"
+      ],
+      "type": "object",
+      "properties": {
+        "siteName": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "plotNumber": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "password": {
+          "minLength": 1,
+          "type": "string"
+        }
+      }
+    },
+    "LoginDto": {
+      "required": [
+        "password",
+        "username"
+      ],
+      "type": "object",
+      "properties": {
+        "username": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "password": {
+          "minLength": 1,
+          "type": "string"
+        }
+      }
+    },
+    "LoginResponseDto": {
+      "type": "object",
+      "properties": {
+        "token": {
+          "type": "string"
+        },
+        "role": {
+          "type": "string"
+        },
+        "fullName": {
+          "type": "string"
+        },
+        "userId": {
+          "format": "int32",
+          "type": "integer"
+        }
+      }
+    },
+    "PaymentResponseDto": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "format": "int32",
+          "type": "integer"
+        },
+        "amount": {
+          "format": "double",
+          "type": "number"
+        },
+        "paymentMethod": {
+          "type": "string"
+        },
+        "transactionReference": {
+          "type": "string"
+        },
+        "paymentDate": {
+          "format": "date-time",
+          "type": "string"
+        },
+        "remarks": {
+          "type": "string"
+        },
+        "receiptId": {
+          "format": "int64",
+          "type": "integer"
+        },
+        "receiptNo": {
+          "type": "string"
+        },
+        "customerName": {
+          "type": "string"
+        },
+        "siteName": {
+          "type": "string"
+        },
+        "plotNumber": {
+          "type": "string"
+        },
+        "createdByName": {
+          "type": "string"
+        },
+        "createdAt": {
+          "format": "date-time",
+          "type": "string"
+        }
+      }
+    },
+    "PaymentResponseDtoPaginatedResult": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/PaymentResponseDto"
+          }
+        },
+        "totalRecords": {
+          "format": "int32",
+          "type": "integer"
+        },
+        "page": {
+          "format": "int32",
+          "type": "integer"
+        },
+        "pageSize": {
+          "format": "int32",
+          "type": "integer"
+        },
+        "totalPages": {
+          "format": "int32",
+          "type": "integer"
+        },
+        "hasNextPage": {
+          "type": "boolean"
+        },
+        "hasPreviousPage": {
+          "type": "boolean"
+        }
+      }
+    },
+    "PlotResponseDto": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "format": "int32",
+          "type": "integer"
+        },
+        "siteName": {
+          "type": "string"
+        },
+        "plotNumber": {
+          "type": "string"
+        },
+        "plotSize": {
+          "type": "string"
+        },
+        "basicRate": {
+          "format": "double",
+          "type": "number"
+        },
+        "totalPrice": {
+          "format": "double",
+          "type": "number"
+        },
+        "status": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "totalPaid": {
+          "format": "double",
+          "type": "number"
+        },
+        "remainingBalance": {
+          "format": "double",
+          "type": "number"
+        },
+        "customerName": {
+          "type": "string"
+        },
+        "associateName": {
+          "type": "string"
+        },
+        "referenceName": {
+          "type": "string"
+        },
+        "receivedAmount": {
+          "format": "double",
+          "type": "number"
+        },
+        "createdAt": {
+          "format": "date-time",
+          "type": "string"
+        },
+        "tokenExpiryDate": {
+          "format": "date-time",
+          "type": "string"
+        },
+        "paymentPercentage": {
+          "format": "double",
+          "type": "number"
+        }
+      }
+    },
+    "PlotResponseDtoPaginatedResult": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/PlotResponseDto"
+          }
+        },
+        "totalRecords": {
+          "format": "int32",
+          "type": "integer"
+        },
+        "page": {
+          "format": "int32",
+          "type": "integer"
+        },
+        "pageSize": {
+          "format": "int32",
+          "type": "integer"
+        },
+        "totalPages": {
+          "format": "int32",
+          "type": "integer"
+        },
+        "hasNextPage": {
+          "type": "boolean"
+        },
+        "hasPreviousPage": {
+          "type": "boolean"
+        }
+      }
+    },
+    "ReceiptResponseDto": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "format": "int64",
+          "type": "integer"
+        },
+        "receiptNo": {
+          "type": "string"
+        },
+        "receiptType": {
+          "type": "string"
+        },
+        "date": {
+          "format": "date-time",
+          "type": "string"
+        },
+        "fromName": {
+          "type": "string"
+        },
+        "relationType": {
+          "type": "string"
+        },
+        "relationName": {
+          "type": "string"
+        },
+        "address": {
+          "type": "string"
+        },
+        "mobile": {
+          "type": "string"
+        },
+        "panNumber": {
+          "type": "string"
+        },
+        "aadharNumber": {
+          "type": "string"
+        },
+        "companyName": {
+          "type": "string"
+        },
+        "tokenExpiryDate": {
+          "format": "date-time",
+          "type": "string"
+        },
+        "referenceName": {
+          "type": "string"
+        },
+        "siteName": {
+          "type": "string"
+        },
+        "plotVillaNo": {
+          "type": "string"
+        },
+        "plotSize": {
+          "type": "string"
+        },
+        "basicRate": {
+          "format": "double",
+          "type": "number"
+        },
+        "amount": {
+          "format": "double",
+          "type": "number"
+        },
+        "other": {
+          "type": "string"
+        },
+        "totalAmount": {
+          "format": "double",
+          "type": "number"
+        },
+        "cashChecked": {
+          "type": "boolean"
+        },
+        "chequeChecked": {
+          "type": "boolean"
+        },
+        "rtgsChecked": {
+          "type": "boolean"
+        },
+        "chequeNo": {
+          "type": "string"
+        },
+        "rtgsNeft": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string"
+        },
+        "adminDiscount": {
+          "format": "double",
+          "type": "number"
+        },
+        "adminRemarks": {
+          "type": "string"
+        },
+        "associateRemarks": {
+          "type": "string"
+        },
+        "createdByName": {
+          "type": "string"
+        },
+        "createdAt": {
+          "format": "date-time",
+          "type": "string"
+        }
+      }
+    },
+    "ReceiptResponseDtoPaginatedResult": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ReceiptResponseDto"
+          }
+        },
+        "totalRecords": {
+          "format": "int32",
+          "type": "integer"
+        },
+        "page": {
+          "format": "int32",
+          "type": "integer"
+        },
+        "pageSize": {
+          "format": "int32",
+          "type": "integer"
+        },
+        "totalPages": {
+          "format": "int32",
+          "type": "integer"
+        },
+        "hasNextPage": {
+          "type": "boolean"
+        },
+        "hasPreviousPage": {
+          "type": "boolean"
+        }
+      }
+    },
+    "SignupDto": {
+      "required": [
+        "companySecretKey",
+        "email",
+        "fullName",
+        "mobile",
+        "password",
+        "role",
+        "username"
+      ],
+      "type": "object",
+      "properties": {
+        "username": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "email": {
+          "format": "email",
+          "minLength": 1,
+          "type": "string"
+        },
+        "password": {
+          "minLength": 6,
+          "type": "string"
+        },
+        "fullName": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "mobile": {
+          "minLength": 1,
+          "pattern": "^[6-9]\\d{9}$",
+          "type": "string"
+        },
+        "role": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "companySecretKey": {
+          "minLength": 1,
+          "type": "string"
+        }
+      }
+    },
+    "TestApprovalDto": {
+      "type": "object",
+      "properties": {
+        "receiptId": {
+          "format": "int64",
+          "type": "integer"
+        },
+        "basicRateDiscount": {
+          "format": "double",
+          "type": "number"
+        }
+      }
+    },
+    "TestDiscountDto": {
+      "type": "object",
+      "properties": {
+        "plotId": {
+          "format": "int32",
+          "type": "integer"
+        },
+        "basicRateDiscount": {
+          "format": "double",
+          "type": "number"
+        }
+      }
+    },
+    "UpdatePlotDto": {
+      "type": "object",
+      "properties": {
+        "plotSize": {
+          "type": "string"
+        },
+        "basicRate": {
+          "format": "double",
+          "type": "number"
+        },
+        "description": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string"
+        }
+      }
+    },
+    "UpdatePlotStatusDto": {
+      "required": [
+        "status"
+      ],
+      "type": "object",
+      "properties": {
+        "status": {
+          "minLength": 1,
+          "type": "string"
+        }
+      }
+    },
+    "UpdateUserDto": {
+      "type": "object",
+      "properties": {
+        "email": {
+          "format": "email",
+          "type": "string"
+        },
+        "fullName": {
+          "type": "string"
+        },
+        "mobile": {
+          "type": "string"
+        },
+        "isActive": {
+          "type": "boolean"
+        },
+        "password": {
+          "minLength": 6,
+          "type": "string"
+        }
+      }
+    }
+  },
+  "securityDefinitions": {
+    "Bearer": {
+      "type": "apiKey",
+      "name": "Authorization",
+      "in": "header",
+      "description": "JWT Authorization header using the Bearer scheme"
+    }
+  },
+  "security": [
+    {
+      "Bearer": [ ]
+    }
+  ]
+}

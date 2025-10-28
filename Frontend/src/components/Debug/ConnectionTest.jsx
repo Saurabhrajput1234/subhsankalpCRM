@@ -49,7 +49,7 @@ const ConnectionTest = () => {
           message: `Cannot connect to backend. ${err.message}`,
           code: err.code,
           status: err.response?.status,
-          suggestion: 'Make sure the backend is running on http://localhost:5007'
+          suggestion: `Make sure the backend is running on ${config.apiBaseUrl.replace('/api', '')}`
         });
       }
     }

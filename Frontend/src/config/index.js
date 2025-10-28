@@ -1,13 +1,12 @@
 // Application configuration
 const config = {
   // API Configuration
-  apiBaseUrl: import.meta.env.VITE_API_BASE_URL || "http://localhost:5007/api",
-  apiBaseUrlHttp:
-    import.meta.env.VITE_API_BASE_URL_HTTP || "http://localhost:5007/api",
+  apiBaseUrl: import.meta.env.VITE_API_BASE_URL,
+  apiBaseUrlHttp: import.meta.env.VITE_API_BASE_URL_HTTP,
 
   // Application Configuration
-  appName: import.meta.env.VITE_APP_NAME || "Real Estate CRM",
-  appVersion: import.meta.env.VITE_APP_VERSION || "1.0.0",
+  appName: import.meta.env.VITE_APP_NAME,
+  appVersion: import.meta.env.VITE_APP_VERSION ,
 
   // Environment
   nodeEnv: import.meta.env.VITE_NODE_ENV || "development",
@@ -19,7 +18,10 @@ const config = {
   enableDebug: import.meta.env.VITE_ENABLE_DEBUG === "true",
 
   // URLs
-  swaggerUrl: "http://localhost:5007/swagger",
+  swaggerUrl:
+    import.meta.env.VITE_NODE_ENV === "production"
+      ? "https://subh-sankalp-estate.azurewebsites.net/swagger"
+      : "http://localhost:5007/swagger",
 
   // Default pagination
   defaultPageSize: 10,
@@ -42,7 +44,8 @@ const config = {
   currencySymbol: "₹",
 
   // Company Settings
-  companySecretKey: import.meta.env.VITE_COMPANY_SECRET_KEY || "SUBH-SANKALP-2024-SECRET",
+  companySecretKey:
+    import.meta.env.VITE_COMPANY_SECRET_KEY ,
   companyName: import.meta.env.VITE_COMPANY_NAME || "Subh Sankalp Estate",
 };
 

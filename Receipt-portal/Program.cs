@@ -1,5 +1,4 @@
-
-using Microsoft.AspNetCore.Authentication.JwtBearer;
+﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Subh_sankalp_estate.Data;
@@ -12,17 +11,14 @@ namespace Subh_sankalp_estate
     {
         public static void Main(string[] args)
         {
-            // Configure PostgreSQL to handle DateTime properly
             AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
-            
+
             var builder = WebApplication.CreateBuilder(args);
 
             // Add services to the container.
             builder.Services.AddDbContext<ApplicationDbContext>(options =>
-                options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"), 
-                    o => {
-                        o.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery);
-                    }));
+                options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"),
+                    o => o.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery)));
 
             // JWT Configuration
             var jwtSettings = builder.Configuration.GetSection("Jwt");
@@ -54,8 +50,6 @@ namespace Subh_sankalp_estate
             builder.Services.AddScoped<IJwtService, JwtService>();
             builder.Services.AddScoped<IReceiptService, ReceiptService>();
             builder.Services.AddScoped<IPlotStatusService, PlotStatusService>();
-            
-            // Register background services
             builder.Services.AddHostedService<TokenExpiryBackgroundService>();
 
             // CORS
@@ -71,6 +65,8 @@ namespace Subh_sankalp_estate
 
             builder.Services.AddControllers();
             builder.Services.AddEndpointsApiExplorer();
+
+            // ✅ Swagger Configuration
             builder.Services.AddSwaggerGen(c =>
             {
                 c.AddSecurityDefinition("Bearer", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
@@ -100,16 +96,15 @@ namespace Subh_sankalp_estate
 
             var app = builder.Build();
 
-
-
-            // Configure the HTTP request pipeline.
-            if (app.Environment.IsDevelopment())
+            // ✅ Always enable Swagger (even after deployment)
+            app.UseSwagger();
+            app.UseSwaggerUI(c =>
             {
-                app.UseSwagger();
-                app.UseSwaggerUI();
-            }
+                c.SwaggerEndpoint("/swagger/v1/swagger.json", "Subh Sankalp Estate API v1");
+                c.RoutePrefix = "swagger"; // URL will be /swagger
+            });
 
-            // app.UseHttpsRedirection(); // Disabled for HTTP-only development
+            // app.UseHttpsRedirection(); // optional: enable if SSL works
             app.UseCors("AllowReactApp");
             app.UseAuthentication();
             app.UseAuthorization();
