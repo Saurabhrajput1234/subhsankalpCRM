@@ -51,6 +51,28 @@ namespace Subh_sankalp_estate.Controllers
                 return Forbid("Only admin can create booking receipts");
             }
             
+            // Auto-populate customer information from previous receipts if not provided
+            if (string.IsNullOrEmpty(createReceiptDto.PanNumber) || string.IsNullOrEmpty(createReceiptDto.AadharNumber))
+            {
+                var previousReceipt = await _context.Receipts
+                    .Where(r => r.SiteName == createReceiptDto.SiteName && r.PlotVillaNo == createReceiptDto.PlotVillaNo)
+                    .OrderByDescending(r => r.CreatedAt)
+                    .FirstOrDefaultAsync();
+                
+                if (previousReceipt != null)
+                {
+                    // Use previous receipt's PAN and AADHAR if current ones are empty
+                    if (string.IsNullOrEmpty(createReceiptDto.PanNumber) && !string.IsNullOrEmpty(previousReceipt.PanNumber))
+                    {
+                        createReceiptDto.PanNumber = previousReceipt.PanNumber;
+                    }
+                    if (string.IsNullOrEmpty(createReceiptDto.AadharNumber) && !string.IsNullOrEmpty(previousReceipt.AadharNumber))
+                    {
+                        createReceiptDto.AadharNumber = previousReceipt.AadharNumber;
+                    }
+                }
+            }
+            
             // Generate receipt number
             var receiptNo = await _receiptService.GenerateReceiptNumberAsync(receiptType);
             

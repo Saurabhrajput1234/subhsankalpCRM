@@ -1,15 +1,15 @@
-import React, { useRef } from 'react';
-import { Printer, Download, Eye } from 'lucide-react';
-import ReceiptTemplate from './ReceiptTemplate';
-import Modal from '../UI/Modal';
+import React, { useRef } from "react";
+import { Printer, Download, Eye } from "lucide-react";
+import ReceiptTemplate from "./ReceiptTemplate";
+import Modal from "../UI/Modal";
 
-const PrintReceipt = ({ receipt, isOpen, onClose, type = 'token' }) => {
+const PrintReceipt = ({ receipt, isOpen, onClose, type = "token" }) => {
   const componentRef = useRef();
 
   const handlePrint = () => {
-    const printWindow = window.open('', '_blank');
+    const printWindow = window.open("", "_blank");
     const printContent = componentRef.current.innerHTML;
-    
+
     const printStyles = `
       <style>
         @page {
@@ -45,7 +45,7 @@ const PrintReceipt = ({ receipt, isOpen, onClose, type = 'token' }) => {
         }
       </style>
     `;
-    
+
     printWindow.document.write(`
       <!DOCTYPE html>
       <html>
@@ -69,7 +69,7 @@ const PrintReceipt = ({ receipt, isOpen, onClose, type = 'token' }) => {
         </body>
       </html>
     `);
-    
+
     printWindow.document.close();
   };
 
@@ -103,7 +103,10 @@ const PrintReceipt = ({ receipt, isOpen, onClose, type = 'token' }) => {
         </div>
 
         {/* Receipt Preview */}
-        <div className="border border-gray-300 rounded-lg overflow-hidden" style={{ maxHeight: '70vh', overflowY: 'auto' }}>
+        <div
+          className="border border-gray-300 rounded-lg overflow-hidden"
+          style={{ maxHeight: "70vh", overflowY: "auto" }}
+        >
           <div ref={componentRef}>
             <ReceiptTemplate receipt={receipt} />
           </div>
@@ -111,7 +114,9 @@ const PrintReceipt = ({ receipt, isOpen, onClose, type = 'token' }) => {
 
         {/* Instructions */}
         <div className="bg-blue-50 p-3 rounded-lg no-print">
-          <h4 className="text-sm font-medium text-blue-800 mb-2">Printing Instructions:</h4>
+          <h4 className="text-sm font-medium text-blue-800 mb-2">
+            Printing Instructions:
+          </h4>
           <ul className="text-xs text-blue-700 space-y-1">
             <li>• Click "Print Receipt" to print on A4 paper</li>
             <li>• Receipt is optimized to fit on a single A4 page</li>

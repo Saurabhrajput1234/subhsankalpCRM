@@ -20,6 +20,8 @@ const BookingReceiptForm = ({ isOpen, onClose, plot, onSuccess }) => {
     relationName: '',
     address: '',
     mobile: '',
+    panNumber: '',
+    aadharNumber: '',
     referenceName: '',
     amount: '',
     other: '',
@@ -60,6 +62,8 @@ const BookingReceiptForm = ({ isOpen, onClose, plot, onSuccess }) => {
           relationName: latestToken.relationName || '',
           address: latestToken.address || '',
           mobile: latestToken.mobile || '',
+          panNumber: latestToken.panNumber || '',
+          aadharNumber: latestToken.aadharNumber || '',
           referenceName: latestToken.referenceName || '',
           // Don't pre-fill amount - admin will enter new payment amount
         }));
@@ -141,6 +145,8 @@ const BookingReceiptForm = ({ isOpen, onClose, plot, onSuccess }) => {
         relationName: formData.relationName,
         address: formData.address,
         mobile: formData.mobile,
+        panNumber: formData.panNumber,
+        aadharNumber: formData.aadharNumber,
         referenceName: formData.referenceName,
         siteName: plot.siteName,
         plotVillaNo: plot.plotNumber,
@@ -332,6 +338,34 @@ const BookingReceiptForm = ({ isOpen, onClose, plot, onSuccess }) => {
                 value={formData.mobile}
                 onChange={handleInputChange}
                 className="input"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                PAN Number
+              </label>
+              <input
+                type="text"
+                name="panNumber"
+                value={formData.panNumber}
+                onChange={handleInputChange}
+                className="input"
+                placeholder="Enter PAN number"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Aadhar Number
+              </label>
+              <input
+                type="text"
+                name="aadharNumber"
+                value={formData.aadharNumber}
+                onChange={handleInputChange}
+                className="input"
+                placeholder="Enter Aadhar number"
               />
             </div>
 

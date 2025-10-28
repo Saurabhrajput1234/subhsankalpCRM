@@ -348,8 +348,8 @@ const CreateReceiptForm = ({ isOpen, onClose, onSuccess }) => {
                   </label>
                   <select {...register('companyName')} className="input">
                     <option value="">Select Company</option>
-                    <option value="Subhsankalp">Subhsankalp</option>
-                    <option value="Golden City">Golden City</option>
+                    <option value="Subhsankalp">Subhsankalp Estate</option>
+                    <option value="Golden City">Shri Prakasha Earthcon Private Limited</option>
                   </select>
                 </div>
               </div>
