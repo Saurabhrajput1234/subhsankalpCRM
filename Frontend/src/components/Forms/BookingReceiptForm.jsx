@@ -87,18 +87,8 @@ const BookingReceiptForm = ({ isOpen, onClose, plot, onSuccess }) => {
   const calculateTotalReceived = () => {
     const currentAmount = parseFloat(formData.amount) || 0;
     
-    // Calculate total from ALL existing receipts (approved + pending token receipts)
-    const existingTotal = allReceipts.reduce((total, receipt) => {
-      // Include approved receipts (both token and booking)
-      if (receipt.status === 'Approved') {
-        return total + (receipt.totalAmount > 0 ? receipt.totalAmount : receipt.amount);
-      }
-      // Include pending token receipts
-      if (receipt.status === 'Pending' && receipt.receiptType === 'token') {
-        return total + receipt.amount;
-      }
-      return total;
-    }, 0);
+    // Use the stored receivedAmount from the plot data (supports both PascalCase and camelCase)
+    const existingTotal = plot?.receivedAmount || plot?.ReceivedAmount || 0;
     
     return currentAmount + existingTotal;
   };

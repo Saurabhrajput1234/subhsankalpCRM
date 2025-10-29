@@ -178,25 +178,11 @@ namespace Subh_sankalp_estate.Controllers
                 var plotSize = ParsePlotSize(p.PlotSize);
                 var calculatedTotalPrice = p.TotalPrice > 0 ? p.TotalPrice : (plotSize * p.BasicRate);
                 
-                // Calculate received amount based on plot status
-                decimal calculatedReceivedAmount = 0;
-                if (p.Status == "Tokened")
-                {
-                    // For tokened plots, only count approved receipts
-                    calculatedReceivedAmount = matchingReceipts
-                        .Where(r => r.Status == "Approved")
-                        .Sum(r => r.TotalAmount > 0 ? r.TotalAmount : r.Amount);
-                }
-                else
-                {
-                    // For other plots, use the original logic
-                    calculatedReceivedAmount = matchingReceipts
-                        .Where(r => r.Status == "Approved" || 
-                                   (r.Status == "Pending" && r.ReceiptType == "token"))
-                        .Sum(r => r.TotalAmount > 0 ? r.TotalAmount : r.Amount);
-                }
+                // Use the stored ReceivedAmount from the database instead of calculating
+                var storedReceivedAmount = p.ReceivedAmount;
                 
-                var storedReceivedAmount = calculatedReceivedAmount;
+                // Debug: Log the stored received amount from database
+                Console.WriteLine($"Plot {p.Id} ({p.SiteName} - {p.PlotNumber}): Stored ReceivedAmount = {p.ReceivedAmount}");
                 
                 var remainingBalance = calculatedTotalPrice - storedReceivedAmount;
                 
@@ -215,9 +201,20 @@ namespace Subh_sankalp_estate.Controllers
                 {
                     Id = p.Id,
                     SiteName = p.SiteName,
+                    Block = p.Block,
                     PlotNumber = p.PlotNumber,
+                    Length = p.Length,
+                    Width = p.Width,
+                    Area = p.Area,
                     PlotSize = p.PlotSize,
                     BasicRate = p.BasicRate,
+                    Road = p.Road,
+                    PLCApplicable = p.PLCApplicable,
+                    TypeofPLC = p.TypeofPLC,
+                    Facing = p.Facing,
+                    RegisteredCompany = p.RegisteredCompany,
+                    GataKhesraNo = p.GataKhesraNo,
+                    AvailablePlot = p.AvailablePlot,
                     TotalPrice = calculatedTotalPrice,
                     Status = p.Status ?? "Available", // Use stored status (updated when receipts approved)
                     Description = p.Description ?? string.Empty,
@@ -305,9 +302,20 @@ namespace Subh_sankalp_estate.Controllers
             {
                 Id = plot.Id,
                 SiteName = plot.SiteName,
+                Block = plot.Block,
                 PlotNumber = plot.PlotNumber,
+                Length = plot.Length,
+                Width = plot.Width,
+                Area = plot.Area,
                 PlotSize = plot.PlotSize,
                 BasicRate = plot.BasicRate,
+                Road = plot.Road,
+                PLCApplicable = plot.PLCApplicable,
+                TypeofPLC = plot.TypeofPLC,
+                Facing = plot.Facing,
+                RegisteredCompany = plot.RegisteredCompany,
+                GataKhesraNo = plot.GataKhesraNo,
+                AvailablePlot = plot.AvailablePlot,
                 TotalPrice = calculatedTotalPrice,
                 Status = plot.Status,
                 Description = plot.Description,
@@ -341,11 +349,25 @@ namespace Subh_sankalp_estate.Controllers
             var plot = new Plot
             {
                 SiteName = createPlotDto.SiteName,
+                Block = createPlotDto.Block,
                 PlotNumber = createPlotDto.PlotNumber,
+                Length = createPlotDto.Length,
+                Width = createPlotDto.Width,
+                Area = createPlotDto.Area,
                 PlotSize = createPlotDto.PlotSize,
                 BasicRate = createPlotDto.BasicRate,
+                Road = createPlotDto.Road,
+                PLCApplicable = createPlotDto.PLCApplicable,
+                TypeofPLC = createPlotDto.TypeofPLC,
+                Facing = createPlotDto.Facing,
+                RegisteredCompany = createPlotDto.RegisteredCompany,
+                GataKhesraNo = createPlotDto.GataKhesraNo,
+                AvailablePlot = createPlotDto.AvailablePlot,
                 Description = createPlotDto.Description,
-                Status = "Available"
+                Status = createPlotDto.AvailablePlot ? "Available" : "Not Available",
+                TotalPrice = createPlotDto.Area > 0 ? createPlotDto.Area * createPlotDto.BasicRate : 0,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
             };
             
             _context.Plots.Add(plot);
@@ -355,12 +377,24 @@ namespace Subh_sankalp_estate.Controllers
             {
                 Id = plot.Id,
                 SiteName = plot.SiteName,
+                Block = plot.Block,
                 PlotNumber = plot.PlotNumber,
+                Length = plot.Length,
+                Width = plot.Width,
+                Area = plot.Area,
                 PlotSize = plot.PlotSize,
                 BasicRate = plot.BasicRate,
+                Road = plot.Road,
+                PLCApplicable = plot.PLCApplicable,
+                TypeofPLC = plot.TypeofPLC,
+                Facing = plot.Facing,
+                RegisteredCompany = plot.RegisteredCompany,
+                GataKhesraNo = plot.GataKhesraNo,
+                AvailablePlot = plot.AvailablePlot,
                 TotalPrice = plot.TotalPrice,
                 Status = plot.Status,
                 Description = plot.Description,
+                ReceivedAmount = 0,
                 CreatedAt = plot.CreatedAt
             });
         }
@@ -443,9 +477,20 @@ namespace Subh_sankalp_estate.Controllers
             {
                 Id = p.Id,
                 SiteName = p.SiteName,
+                Block = p.Block,
                 PlotNumber = p.PlotNumber,
+                Length = p.Length,
+                Width = p.Width,
+                Area = p.Area,
                 PlotSize = p.PlotSize,
                 BasicRate = p.BasicRate,
+                Road = p.Road,
+                PLCApplicable = p.PLCApplicable,
+                TypeofPLC = p.TypeofPLC,
+                Facing = p.Facing,
+                RegisteredCompany = p.RegisteredCompany,
+                GataKhesraNo = p.GataKhesraNo,
+                AvailablePlot = p.AvailablePlot,
                 Status = p.Status,
                 Description = p.Description,
                 CreatedAt = p.CreatedAt
@@ -509,9 +554,20 @@ namespace Subh_sankalp_estate.Controllers
                 {
                     Id = p.Id,
                     SiteName = p.SiteName,
+                    Block = p.Block,
                     PlotNumber = p.PlotNumber,
+                    Length = p.Length,
+                    Width = p.Width,
+                    Area = p.Area,
                     PlotSize = p.PlotSize,
                     BasicRate = p.BasicRate,
+                    Road = p.Road,
+                    PLCApplicable = p.PLCApplicable,
+                    TypeofPLC = p.TypeofPLC,
+                    Facing = p.Facing,
+                    RegisteredCompany = p.RegisteredCompany,
+                    GataKhesraNo = p.GataKhesraNo,
+                    AvailablePlot = p.AvailablePlot,
                     TotalPrice = calculatedTotalPrice,
                     Status = p.Status,
                     Description = p.Description,
@@ -657,11 +713,23 @@ namespace Subh_sankalp_estate.Controllers
                     var plot = new Plot
                     {
                         SiteName = bulkCreateDto.SiteName,
+                        Block = plotData.Block,
                         PlotNumber = plotData.PlotNumber,
+                        Length = plotData.Length,
+                        Width = plotData.Width,
+                        Area = plotData.Area,
                         PlotSize = plotData.PlotSize,
                         BasicRate = plotData.BasicRate,
+                        Road = plotData.Road,
+                        PLCApplicable = plotData.PLCApplicable,
+                        TypeofPLC = plotData.TypeofPLC,
+                        Facing = plotData.Facing,
+                        RegisteredCompany = plotData.RegisteredCompany,
+                        GataKhesraNo = plotData.GataKhesraNo,
+                        AvailablePlot = plotData.AvailablePlot,
                         Description = bulkCreateDto.Description ?? $"Plot in {bulkCreateDto.SiteName}",
-                        Status = "Available"
+                        Status = plotData.AvailablePlot ? "Available" : "Not Available",
+                        TotalPrice = plotData.Area * plotData.BasicRate
                     };
                     
                     _context.Plots.Add(plot);
@@ -1973,6 +2041,7 @@ namespace Subh_sankalp_estate.Controllers
                 _ => isDescending ? query.OrderByDescending(p => p.CreatedAt) : query.OrderBy(p => p.CreatedAt)
             };
         }
+
     }
 
     public class TestDiscountDto

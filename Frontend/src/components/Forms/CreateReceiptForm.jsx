@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { X } from "lucide-react";
 import { receiptsAPI, plotsAPI } from "../../utils/api";
-
+import { isAdmin } from "../../utils/auth";
 import { numberToWords } from "../../utils/numberToWords";
 import LoadingSpinner from "../UI/LoadingSpinner";
 import toast from "react-hot-toast";
@@ -15,6 +15,9 @@ const CreateReceiptForm = ({ isOpen, onClose, onSuccess }) => {
   const [plotSearch, setPlotSearch] = useState("");
   const [showPlotDropdown, setShowPlotDropdown] = useState(false);
   const [nextReceiptNo, setNextReceiptNo] = useState("0001");
+  const [customBasicRate, setCustomBasicRate] = useState("");
+  const [isRateModified, setIsRateModified] = useState(false);
+  const [updatePlotRate, setUpdatePlotRate] = useState(false);
 
   const {
     register,
@@ -40,6 +43,8 @@ const CreateReceiptForm = ({ isOpen, onClose, onSuccess }) => {
   const watchedPlotVillaNo = watch("plotVillaNo");
   const watchedAmount = watch("amount");
   const watchedDate = watch("date");
+
+
 
   useEffect(() => {
     if (isOpen) {
@@ -71,9 +76,18 @@ const CreateReceiptForm = ({ isOpen, onClose, onSuccess }) => {
       setSelectedPlot(plot);
       if (plot) {
         setPlotSearch(plot.plotNumber);
+
+        // Reset custom rate when plot changes
+        setCustomBasicRate(plot.basicRate.toString());
+        setIsRateModified(false);
+
+        // Auto-fill company name from plot's registered company
+        if (plot.registeredCompany) {
+          setValue("companyName", plot.registeredCompany);
+        }
       }
     }
-  }, [watchedSiteName, watchedPlotVillaNo, availablePlots]);
+  }, [watchedSiteName, watchedPlotVillaNo, availablePlots, setValue]);
 
   // Auto-calculate amount in words
   useEffect(() => {
@@ -149,6 +163,15 @@ const CreateReceiptForm = ({ isOpen, onClose, onSuccess }) => {
       if (matchingPlot) {
         setSelectedPlot(matchingPlot);
         setValue("plotVillaNo", matchingPlot.plotNumber);
+
+        // Reset custom rate when plot changes
+        setCustomBasicRate(matchingPlot.basicRate.toString());
+        setIsRateModified(false);
+
+        // Auto-fill company name from plot's registered company
+        if (matchingPlot.registeredCompany) {
+          setValue("companyName", matchingPlot.registeredCompany);
+        }
       }
     }
   };
@@ -157,6 +180,16 @@ const CreateReceiptForm = ({ isOpen, onClose, onSuccess }) => {
     setSelectedPlot(plot);
     setPlotSearch(plot.plotNumber);
     setValue("plotVillaNo", plot.plotNumber);
+
+    // Reset custom rate when plot changes
+    setCustomBasicRate(plot.basicRate.toString());
+    setIsRateModified(false);
+
+    // Auto-fill company name from plot's registered company
+    if (plot.registeredCompany) {
+      setValue("companyName", plot.registeredCompany);
+    }
+
     setShowPlotDropdown(false);
   };
 
@@ -165,15 +198,81 @@ const CreateReceiptForm = ({ isOpen, onClose, onSuccess }) => {
     setSelectedPlot(null);
     setPlotSearch("");
     setValue("plotVillaNo", "");
+    setValue("companyName", ""); // Clear company name when site changes
     setValue("siteName", siteName);
+
+    // Reset custom rate
+    setCustomBasicRate("");
+    setIsRateModified(false);
+  };
+
+  const handleBasicRateChange = (value) => {
+    setCustomBasicRate(value);
+    if (selectedPlot) {
+      setIsRateModified(parseFloat(value) !== selectedPlot.basicRate);
+    }
+  };
+
+  const resetBasicRate = () => {
+    if (selectedPlot) {
+      setCustomBasicRate(selectedPlot.basicRate.toString());
+      setIsRateModified(false);
+    }
+  };
+
+  const getCurrentBasicRate = () => {
+    return customBasicRate
+      ? parseFloat(customBasicRate)
+      : selectedPlot?.basicRate || 0;
+  };
+
+  const updatePlotBasicRate = async (plotId, newRate) => {
+    try {
+      await plotsAPI.updatePlot(plotId, { basicRate: newRate });
+      toast.success("Plot basic rate updated successfully");
+      
+      // Update the selected plot in state
+      setSelectedPlot(prev => prev ? { ...prev, basicRate: newRate } : null);
+      
+      // Update the available plots list
+      setAvailablePlots(prev => 
+        prev.map(plot => 
+          plot.id === plotId ? { ...plot, basicRate: newRate } : plot
+        )
+      );
+      
+      setIsRateModified(false);
+      setCustomBasicRate(newRate.toString());
+    } catch (error) {
+      console.error("Error updating plot basic rate:", error);
+      toast.error("Failed to update plot basic rate");
+    }
   };
 
   const onSubmit = async (data) => {
     try {
       setLoading(true);
-      console.log("Creating receipt with data:", data);
 
-      const response = await receiptsAPI.createReceipt(data);
+      // Update plot basic rate if admin chose to do so
+      if (isRateModified && isAdmin() && updatePlotRate && selectedPlot) {
+        await updatePlotBasicRate(selectedPlot.id, parseFloat(customBasicRate));
+      }
+
+      // Include custom basic rate if modified by admin
+      const submitData = {
+        ...data,
+        ...(isRateModified &&
+          isAdmin() && {
+            customBasicRate: parseFloat(customBasicRate),
+            originalBasicRate: selectedPlot?.basicRate,
+            rateModifiedBy: "admin",
+            plotRateUpdated: updatePlotRate
+          }),
+      };
+
+      console.log("Creating receipt with data:", submitData);
+
+      const response = await receiptsAPI.createReceipt(submitData);
       console.log("Receipt created successfully:", response.data);
 
       toast.success("Receipt created successfully");
@@ -218,6 +317,9 @@ const CreateReceiptForm = ({ isOpen, onClose, onSuccess }) => {
     setPlotSearch("");
     setShowPlotDropdown(false);
     setNextReceiptNo("0001");
+    setCustomBasicRate("");
+    setIsRateModified(false);
+    setUpdatePlotRate(false);
     onClose();
   };
 
@@ -264,9 +366,180 @@ const CreateReceiptForm = ({ isOpen, onClose, onSuccess }) => {
 
           {/* Form */}
           <form onSubmit={handleSubmit(onSubmit)} className="p-6 space-y-6">
+            {/* Plot Information */}
+            <div>
+              <h4 className="text-md font-medium text-gray-900 mb-4 flex items-center">
+                <span className="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded-full mr-2">
+                  1
+                </span>
+                Plot Information
+              </h4>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Site Name */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Site Name *
+                  </label>
+                  <select
+                    {...register("siteName", {
+                      required: "Site name is required",
+                    })}
+                    onChange={(e) => handleSiteChange(e.target.value)}
+                    className="input"
+                  >
+                    <option value="">Select Site</option>
+                    {allSites.map((site) => (
+                      <option key={site} value={site}>
+                        {site}
+                      </option>
+                    ))}
+                  </select>
+                  {errors.siteName && (
+                    <p className="mt-1 text-sm text-red-600">
+                      {errors.siteName.message}
+                    </p>
+                  )}
+                </div>
+
+                {/* Plot Number with Search */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Plot Number *
+                  </label>
+                  <div className="relative plot-search-container">
+                    <input
+                      type="text"
+                      {...register("plotVillaNo", {
+                        required: "Plot number is required",
+                      })}
+                      value={plotSearch}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        setPlotSearch(value);
+                        setValue("plotVillaNo", value);
+                        handlePlotSearch(value);
+                      }}
+                      onFocus={() => setShowPlotDropdown(true)}
+                      className="input"
+                      placeholder={
+                        watchedSiteName
+                          ? `Search in ${watchedSiteName} (e.g., A001)`
+                          : "Select site first"
+                      }
+                      disabled={!watchedSiteName}
+                    />
+
+                    {/* Search Results Dropdown */}
+                    {showPlotDropdown &&
+                      watchedSiteName &&
+                      (plotSearch.length >= 1 || plotSearch === "") && (
+                        <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto">
+                          {availablePlotsForSite
+                            .filter((plot) => {
+                              if (plotSearch === "") return true;
+                              return plot.plotNumber
+                                .toLowerCase()
+                                .includes(plotSearch.toLowerCase());
+                            })
+                            .slice(0, 15)
+                            .map((plot) => (
+                              <div
+                                key={plot.id}
+                                onClick={() => {
+                                  setSelectedPlot(plot);
+                                  setPlotSearch(plot.plotNumber);
+                                  setValue("plotVillaNo", plot.plotNumber);
+
+                                  // Reset custom rate when plot changes
+                                  setCustomBasicRate(plot.basicRate.toString());
+                                  setIsRateModified(false);
+
+                                  // Auto-fill company name from plot's registered company
+                                  if (plot.registeredCompany) {
+                                    setValue(
+                                      "companyName",
+                                      plot.registeredCompany
+                                    );
+                                  }
+
+                                  setShowPlotDropdown(false);
+                                }}
+                                className="px-4 py-2 hover:bg-blue-50 cursor-pointer border-b border-gray-100"
+                              >
+                                <div className="font-medium text-gray-900">
+                                  {plot.plotNumber}
+                                </div>
+                                <div className="text-sm text-gray-600">
+                                  {plot.plotSize} • ₹
+                                  {plot.basicRate.toLocaleString()}/sq yard
+                                </div>
+                              </div>
+                            ))}
+                          {availablePlotsForSite.filter((plot) => {
+                            if (plotSearch === "") return true;
+                            return plot.plotNumber
+                              .toLowerCase()
+                              .includes(plotSearch.toLowerCase());
+                          }).length === 0 &&
+                            plotSearch !== "" && (
+                              <div className="px-4 py-2 text-gray-500 text-sm">
+                                No plots found matching "{plotSearch}"
+                              </div>
+                            )}
+                          {plotSearch === "" &&
+                            availablePlotsForSite.length > 0 && (
+                              <div className="px-4 py-2 text-blue-600 text-sm border-b border-gray-100 font-medium">
+                                {availablePlotsForSite.length} available plots -
+                                click to select
+                              </div>
+                            )}
+                        </div>
+                      )}
+                  </div>
+                  {errors.plotVillaNo && (
+                    <p className="mt-1 text-sm text-red-600">
+                      {errors.plotVillaNo.message}
+                    </p>
+                  )}
+                </div>
+
+                {/* Company Name - Right after Plot Number */}
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Company Name
+                    {selectedPlot && selectedPlot.registeredCompany && (
+                      <span className="text-xs text-green-600 ml-2 bg-green-100 px-2 py-0.5 rounded-full">
+                        ✓ Auto-filled from plot
+                      </span>
+                    )}
+                  </label>
+                  <input
+                    {...register("companyName")}
+                    type="text"
+                    className={`input ${
+                      selectedPlot && selectedPlot.registeredCompany
+                        ? "border-green-300 bg-green-50 focus:border-green-500 focus:ring-green-500"
+                        : ""
+                    }`}
+                    placeholder="Enter company name or select a plot to auto-fill"
+                  />
+                  {selectedPlot && selectedPlot.registeredCompany && (
+                    <p className="mt-1 text-xs text-green-600">
+                      Automatically filled from plot's registered company. You
+                      can edit if needed.
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
+
             {/* Customer Information */}
             <div>
-              <h4 className="text-md font-medium text-gray-900 mb-4">
+              <h4 className="text-md font-medium text-gray-900 mb-4 flex items-center">
+                <span className="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded-full mr-2">
+                  2
+                </span>
                 Customer Information
               </h4>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -379,235 +652,180 @@ const CreateReceiptForm = ({ isOpen, onClose, onSuccess }) => {
                   />
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Company Name
-                  </label>
-                  <select {...register("companyName")} className="input">
-                    <option value="">Select Company</option>
-                    <option value="Subhsankalp Estate">Subhsankalp Estate</option>
-                    <option value="Shri Prakasha Earthcon Private Limited">
-                      Shri Prakasha Earthcon Private Limited
-                    </option>
-                    <option value="Shri Prakasha Earthcon Private Limited">
-                      Shri Prakasha Earthcon Private Limited
-                    </option>
-                    <option value="Shri Prakasha Earthcon Private Limited">
-                      Shri Prakasha Earthcon Private Limited
-                    </option>
-                    <option value="Shri Prakasha Earthcon Private Limited">
-                      Shri Prakasha Earthcon Private Limited
-                    </option>
-                    <option value="Shri Prakasha Earthcon Private Limited">
-                      Shri Prakasha Earthcon Private Limited
-                    </option>
-                  </select>
-                </div>
-              </div>
-            </div>
+                {/* Plot Details - Auto-filled when plot is selected */}
+                {selectedPlot && (
+                  <>
+                    {/* Plot Size - Auto-filled */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Plot Size
+                      </label>
+                      <input
+                        type="text"
+                        value={selectedPlot?.plotSize || ""}
+                        className={`input ${
+                          selectedPlot
+                            ? "bg-green-50 border-green-300"
+                            : "bg-gray-50"
+                        }`}
+                        readOnly
+                        placeholder="Auto-filled"
+                      />
+                    </div>
 
-            {/* Plot Information */}
-            <div>
-              <h4 className="text-md font-medium text-gray-900 mb-4">
-                Plot Information
-              </h4>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* Site Name */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Site Name *
-                  </label>
-                  <select
-                    {...register("siteName", {
-                      required: "Site name is required",
-                    })}
-                    onChange={(e) => handleSiteChange(e.target.value)}
-                    className="input"
-                  >
-                    <option value="">Select Site</option>
-                    {allSites.map((site) => (
-                      <option key={site} value={site}>
-                        {site}
-                      </option>
-                    ))}
-                  </select>
-                  {errors.siteName && (
-                    <p className="mt-1 text-sm text-red-600">
-                      {errors.siteName.message}
-                    </p>
-                  )}
-                </div>
-
-                {/* Plot Number with Search */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Plot Number *
-                  </label>
-                  <div className="relative plot-search-container">
-                    <input
-                      type="text"
-                      {...register("plotVillaNo", {
-                        required: "Plot number is required",
-                      })}
-                      value={plotSearch}
-                      onChange={(e) => {
-                        const value = e.target.value;
-                        setPlotSearch(value);
-                        setValue("plotVillaNo", value);
-                        handlePlotSearch(value);
-                      }}
-                      onFocus={() => setShowPlotDropdown(true)}
-                      className="input"
-                      placeholder={
-                        watchedSiteName
-                          ? `Search in ${watchedSiteName} (e.g., A-001)`
-                          : "Select site first"
-                      }
-                      disabled={!watchedSiteName}
-                    />
-
-                    {/* Search Results Dropdown */}
-                    {showPlotDropdown &&
-                      watchedSiteName &&
-                      (plotSearch.length >= 1 || plotSearch === "") && (
-                        <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto">
-                          {availablePlotsForSite
-                            .filter((plot) => {
-                              if (plotSearch === "") return true;
-                              return plot.plotNumber
-                                .toLowerCase()
-                                .includes(plotSearch.toLowerCase());
-                            })
-                            .slice(0, 15)
-                            .map((plot) => (
-                              <div
-                                key={plot.id}
-                                onClick={() => {
-                                  setSelectedPlot(plot);
-                                  setPlotSearch(plot.plotNumber);
-                                  setValue("plotVillaNo", plot.plotNumber);
-                                  setShowPlotDropdown(false);
-                                }}
-                                className="px-4 py-2 hover:bg-blue-50 cursor-pointer border-b border-gray-100"
-                              >
-                                <div className="font-medium text-gray-900">
-                                  {plot.plotNumber}
-                                </div>
-                                <div className="text-sm text-gray-600">
-                                  {plot.plotSize} • ₹
-                                  {plot.basicRate.toLocaleString()}/sq ft
-                                </div>
-                              </div>
-                            ))}
-                          {availablePlotsForSite.filter((plot) => {
-                            if (plotSearch === "") return true;
-                            return plot.plotNumber
-                              .toLowerCase()
-                              .includes(plotSearch.toLowerCase());
-                          }).length === 0 &&
-                            plotSearch !== "" && (
-                              <div className="px-4 py-2 text-gray-500 text-sm">
-                                No plots found matching "{plotSearch}"
-                              </div>
+                    {/* Basic Rate - Editable for Admin, Read-only for Associates */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Basic Rate (per sq yard)
+                        {isAdmin() ? (
+                          <span className="text-xs text-blue-600 ml-2">
+                            (Editable)
+                          </span>
+                        ) : (
+                          <span className="text-xs text-gray-500 ml-2">
+                            (Auto-filled)
+                          </span>
+                        )}
+                      </label>
+                      
+                      {isAdmin() ? (
+                        // Admin: Editable input with reset option
+                        <div className="flex space-x-2">
+                          <input
+                            type="number"
+                            value={customBasicRate}
+                            onChange={(e) => handleBasicRateChange(e.target.value)}
+                            className={`input flex-1 ${
+                              isRateModified
+                                ? "bg-orange-50 border-orange-300 focus:border-orange-500 focus:ring-orange-500"
+                                : "bg-blue-50 border-blue-300 focus:border-blue-500 focus:ring-blue-500"
+                            }`}
+                            placeholder="Enter basic rate"
+                            step="0.01"
+                            min="0"
+                          />
+                          {isRateModified && (
+                            <button
+                              type="button"
+                              onClick={resetBasicRate}
+                              className="px-3 py-2 text-xs bg-gray-100 text-gray-600 rounded border hover:bg-gray-200"
+                              title="Reset to original rate"
+                            >
+                              Reset
+                            </button>
+                          )}
+                        </div>
+                      ) : (
+                        // Associate: Read-only display
+                        <input
+                          type="text"
+                          value={selectedPlot ? `₹${selectedPlot.basicRate.toLocaleString()}` : ""}
+                          className="input bg-green-50 border-green-300"
+                          readOnly
+                          placeholder="Auto-filled from plot"
+                        />
+                      )}
+                      
+                      {/* Admin-only rate information */}
+                      {isAdmin() && (
+                        <div className="mt-2 space-y-2">
+                          <p className="text-xs text-gray-500">
+                            Original: ₹{selectedPlot.basicRate.toLocaleString()}/sq yard
+                            {isRateModified && (
+                              <span className="text-orange-600 ml-2 font-medium">
+                                → Modified: ₹{parseFloat(customBasicRate || 0).toLocaleString()}/sq yard
+                              </span>
                             )}
-                          {plotSearch === "" &&
-                            availablePlotsForSite.length > 0 && (
-                              <div className="px-4 py-2 text-blue-600 text-sm border-b border-gray-100 font-medium">
-                                {availablePlotsForSite.length} available plots -
-                                click to select
-                              </div>
-                            )}
+                          </p>
+                          
+                          {isRateModified && (
+                            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+                              <label className="flex items-start space-x-3">
+                                <input
+                                  type="checkbox"
+                                  checked={updatePlotRate}
+                                  onChange={(e) => setUpdatePlotRate(e.target.checked)}
+                                  className="mt-0.5 rounded border-yellow-300 text-yellow-600 focus:ring-yellow-500"
+                                />
+                                <div>
+                                  <span className="text-sm font-medium text-yellow-900">
+                                    Update plot's basic rate permanently
+                                  </span>
+                                  <p className="text-xs text-yellow-700 mt-1">
+                                    This will change the basic rate for plot {selectedPlot.plotNumber} in the database. 
+                                    Future receipts for this plot will use the new rate (₹{parseFloat(customBasicRate || 0).toLocaleString()}/sq yard).
+                                  </p>
+                                </div>
+                              </label>
+                            </div>
+                          )}
                         </div>
                       )}
-                  </div>
-                  {errors.plotVillaNo && (
-                    <p className="mt-1 text-sm text-red-600">
-                      {errors.plotVillaNo.message}
-                    </p>
-                  )}
-                </div>
+                    </div>
 
-                {/* Plot Size - Auto-filled */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Plot Size
-                  </label>
-                  <input
-                    type="text"
-                    value={selectedPlot?.plotSize || ""}
-                    className={`input ${
-                      selectedPlot
-                        ? "bg-green-50 border-green-300"
-                        : "bg-gray-50"
-                    }`}
-                    readOnly
-                    placeholder="Auto-filled"
-                  />
-                </div>
-
-                {/* Basic Rate - Auto-filled */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Basic Rate (per sq ft/yd)
-                  </label>
-                  <input
-                    type="text"
-                    value={
-                      selectedPlot
-                        ? `₹${selectedPlot.basicRate.toLocaleString()}`
-                        : ""
-                    }
-                    className={`input ${
-                      selectedPlot
-                        ? "bg-green-50 border-green-300"
-                        : "bg-gray-50"
-                    }`}
-                    readOnly
-                    placeholder="Auto-filled"
-                  />
-                </div>
-
-                {/* Plot Value Calculation */}
-                {selectedPlot && (
-                  <div className="md:col-span-2">
-                    <div className="bg-blue-50 p-3 rounded-lg border border-blue-200">
-                      <h6 className="font-medium text-blue-900 mb-2">
-                        Plot Value
-                      </h6>
-                      <div className="text-sm text-blue-800 space-y-1">
-                        <div className="flex justify-between">
-                          <span>Size:</span>
-                          <span>{selectedPlot.plotSize}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span>Rate:</span>
-                          <span>
-                            ₹{selectedPlot.basicRate.toLocaleString()}/sq ft
-                          </span>
-                        </div>
-                        <div className="flex justify-between font-semibold border-t border-blue-300 pt-1">
-                          <span>Total Value:</span>
-                          <span>
-                            ₹
-                            {(
-                              parseFloat(
-                                selectedPlot.plotSize?.replace(/[^\d.]/g, "") ||
-                                  "0"
-                              ) * selectedPlot.basicRate
-                            ).toLocaleString()}
-                          </span>
+                    {/* Plot Value Calculation */}
+                    <div className="md:col-span-2">
+                      <div className="bg-blue-50 p-3 rounded-lg border border-blue-200">
+                        <h6 className="font-medium text-blue-900 mb-2">
+                          Plot Value
+                        </h6>
+                        <div className="text-sm text-blue-800 space-y-1">
+                          <div className="flex justify-between">
+                            <span>Size:</span>
+                            <span>{selectedPlot.plotSize}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>Rate:</span>
+                            <span
+                              className={
+                                isRateModified
+                                  ? "text-orange-600 font-medium"
+                                  : ""
+                              }
+                            >
+                              ₹{getCurrentBasicRate().toLocaleString()}/sq yard
+                              {isRateModified && (
+                                <span className="text-xs ml-1">(Modified)</span>
+                              )}
+                            </span>
+                          </div>
+                          <div className="flex justify-between font-semibold border-t border-blue-300 pt-1">
+                            <span>Total Value:</span>
+                            <span
+                              className={
+                                isRateModified ? "text-orange-600" : ""
+                              }
+                            >
+                              ₹
+                              {(
+                                parseFloat(
+                                  selectedPlot.plotSize?.replace(
+                                    /[^\d.]/g,
+                                    ""
+                                  ) || "0"
+                                ) * getCurrentBasicRate()
+                              ).toLocaleString()}
+                              {isRateModified && (
+                                <span className="text-xs ml-1">
+                                  (With modified rate)
+                                </span>
+                              )}
+                            </span>
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
+                  </>
                 )}
               </div>
             </div>
 
             {/* Payment Information */}
             <div>
-              <h4 className="text-md font-medium text-gray-900 mb-4">
+              <h4 className="text-md font-medium text-gray-900 mb-4 flex items-center">
+                <span className="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded-full mr-2">
+                  3
+                </span>
                 Payment Information
               </h4>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

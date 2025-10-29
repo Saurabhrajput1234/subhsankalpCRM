@@ -434,7 +434,7 @@ const ApprovalForm = ({ receipt, isOpen, onClose, onSuccess }) => {
                 {/* Discount Field */}
                 <div>
                   <label className="block text-sm font-bold text-blue-900 mb-1">
-                    Discount per sq ft (₹)
+                    Discount per sq yard (₹)
                   </label>
                   <input
                     {...register("discount", {
@@ -447,7 +447,7 @@ const ApprovalForm = ({ receipt, isOpen, onClose, onSuccess }) => {
                     type="number"
                     step="0.01"
                     className="input border-blue-300 focus:border-blue-500 focus:ring-blue-500"
-                    placeholder="Enter discount per sq ft"
+                    placeholder="Enter discount per sq yard"
                   />
                   {errors.discount && (
                     <p className="mt-1 text-sm text-red-600">
@@ -492,19 +492,19 @@ const ApprovalForm = ({ receipt, isOpen, onClose, onSuccess }) => {
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
                     <span>Plot Size:</span>
-                    <span>{plotSize} sq ft</span>
+                    <span>{plotSize} sq yard</span>
                   </div>
                   <div className="flex justify-between">
                     <span>Original Basic Rate:</span>
-                    <span>₹{originalBasicRate.toLocaleString()}/sq ft</span>
+                    <span>₹{originalBasicRate.toLocaleString()}/sq yard</span>
                   </div>
                   <div className="flex justify-between text-red-600">
-                    <span>Discount per sq ft:</span>
+                    <span>Discount per sq yard:</span>
                     <span>- ₹{discountPerSqFt.toLocaleString()}</span>
                   </div>
                   <div className="flex justify-between font-semibold text-blue-600 bg-blue-100 px-2 py-1 rounded">
                     <span>New Basic Rate:</span>
-                    <span>₹{discountedBasicRate.toLocaleString()}/sq ft</span>
+                    <span>₹{discountedBasicRate.toLocaleString()}/sq yard</span>
                   </div>
                   <div className="flex justify-between">
                     <span>Base Amount:</span>

@@ -231,65 +231,92 @@ const Plots = () => {
 
   const columns = [
     {
+      key: "id",
+      title: "ID",
+      sortable: true,
+      render: (value) => value,
+    },
+    {
       key: "siteName",
       title: "Site Name",
       sortable: true,
+      render: (value, row) => (
+        <div className="text-sm">
+          <p className="font-medium text-gray-900">{value}</p>
+          {row.block && (
+            <p className="text-gray-500 text-xs">Block: {row.block}</p>
+          )}
+        </div>
+      ),
     },
     {
       key: "plotNumber",
       title: "Plot Number",
       sortable: true,
+      render: (value, row) => (
+        <div className="text-sm">
+          <p className="font-medium text-gray-900">{value}</p>
+          {row.registeredCompany && (
+            <p className="text-gray-500 text-xs">{row.registeredCompany}</p>
+          )}
+        </div>
+      ),
     },
     {
       key: "plotSize",
       title: "Plot Size",
       sortable: true,
+      render: (value, row) => (
+        <div className="text-sm">
+          <p className="font-medium text-gray-900">
+            {value || "Not specified"}
+          </p>
+          {row.facing && (
+            <p className="text-gray-500 text-xs">Facing: {row.facing}</p>
+          )}
+        </div>
+      ),
     },
     {
       key: "basicRate",
-      title: "Basic Rate",
+      title: "Rate & Price",
       sortable: true,
-      render: (value) => formatCurrency(value),
-    },
-    {
-      key: "totalPrice",
-      title: "Total Price",
-      sortable: true,
-      render: (value) => (value ? formatCurrency(value) : "Not Calculated"),
+      render: (value, row) => (
+        <div className="text-sm">
+          <p className="font-medium text-gray-900">
+            {formatCurrency(value)}/sq yard
+          </p>
+          <p className="text-gray-600 text-xs">
+            Total:{" "}
+            {row.totalPrice ? formatCurrency(row.totalPrice) : "Not Calculated"}
+          </p>
+        </div>
+      ),
     },
     {
       key: "customerName",
-      title: "Customer",
+      title: "Customer & Associate",
       render: (value, row) => {
         if (row.status === "Available") {
           return <span className="text-gray-400 text-sm">-</span>;
         }
-        // Show customer data for both Booked and Sold plots
-        if (row.status === "Booked" || row.status === "Sold") {
+        // Show customer data for Tokened, Booked and Sold plots
+        if (
+          row.status === "Tokened" ||
+          row.status === "Booked" ||
+          row.status === "Sold"
+        ) {
           return (
             <div className="text-sm">
               <p className="font-medium text-gray-900">{value || "N/A"}</p>
               {row.associateName && (
                 <p className="text-gray-500 text-xs">by {row.associateName}</p>
               )}
-            </div>
-          );
-        }
-        return <span className="text-gray-400 text-sm">-</span>;
-      },
-    },
-    {
-      key: "referenceName",
-      title: "Reference",
-      render: (value, row) => {
-        if (row.status === "Available") {
-          return <span className="text-gray-400 text-sm">-</span>;
-        }
-        // Show reference data for both Booked and Sold plots
-        if (row.status === "Booked" || row.status === "Sold") {
-          return (
-            <div className="text-sm">
-              <p className="text-gray-900">{value || "N/A"}</p>
+              {row.referenceName && (
+                <p className="text-gray-500 text-xs">
+                  Ref: {row.referenceName}
+                </p>
+              )}
             </div>
           );
         }
@@ -300,16 +327,59 @@ const Plots = () => {
       key: "receivedAmount",
       title: "Received Amount",
       render: (value, row) => {
+        // Use the received amount from the backend (supports both PascalCase and camelCase)
+        const received =
+          row.receivedAmount ||
+          row.ReceivedAmount ||
+          row.totalPaid ||
+          row.TotalPaid ||
+          value ||
+          0;
+
+        return (
+          <div className="text-sm">
+            <p className="font-medium text-green-600">
+              {received > 0 ? formatCurrency(received) : "₹0"}
+            </p>
+          </div>
+        );
+      },
+    },
+    {
+      key: "paymentStatus",
+      title: "Payment Status",
+      render: (value, row) => {
         if (row.status === "Available") {
           return <span className="text-gray-400 text-sm">-</span>;
         }
-        // Show received amount for both Booked and Sold plots
-        if (row.status === "Booked" || row.status === "Sold") {
+
+        // Show payment info for Tokened, Booked and Sold plots
+        if (
+          row.status === "Tokened" ||
+          row.status === "Booked" ||
+          row.status === "Sold"
+        ) {
+          const received = row.receivedAmount || row.ReceivedAmount || 0;
+          const total = row.totalPrice || 0;
+          const percentage = total > 0 ? (received / total) * 100 : 0;
+
           return (
             <div className="text-sm">
-              <p className="font-medium text-green-600">
-                {value && value > 0 ? formatCurrency(value) : "₹0"}
-              </p>
+              {total > 0 && (
+                <p className="text-gray-600 text-xs">
+                  {percentage.toFixed(1)}% paid
+                </p>
+              )}
+              {row.tokenExpiryDate && row.status === "Tokened" && (
+                <p className="text-orange-600 text-xs">
+                  Expires: {formatDate(row.tokenExpiryDate)}
+                </p>
+              )}
+              {percentage >= 100 && (
+                <p className="text-green-600 text-xs font-medium">
+                  ✓ Fully Paid
+                </p>
+              )}
             </div>
           );
         }
@@ -326,9 +396,13 @@ const Plots = () => {
     },
     {
       key: "createdAt",
-      title: "Created Date",
+      title: "Created",
       sortable: true,
-      render: (value) => formatDate(value),
+      render: (value) => (
+        <div className="text-sm">
+          <p className="text-gray-900">{formatDate(value)}</p>
+        </div>
+      ),
     },
     {
       key: "actions",
@@ -399,7 +473,11 @@ const Plots = () => {
     // Also check remaining balance as backup
     const hasRemainingBalance = plot.remainingBalance > 0;
 
-    return (isTokened || isBooked) && isAdmin && (isNotFullyPaid || hasRemainingBalance);
+    return (
+      (isTokened || isBooked) &&
+      isAdmin &&
+      (isNotFullyPaid || hasRemainingBalance)
+    );
   };
 
   return (
@@ -548,7 +626,7 @@ const Plots = () => {
       )}
 
       {/* Statistics Cards - Clickable Filters */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
         <div
           className={`card cursor-pointer transition-all duration-200 hover:shadow-lg ${
             filters.status === "Available"
@@ -563,9 +641,7 @@ const Plots = () => {
                 <MapPin className="h-8 w-8 text-green-600" />
               </div>
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-500">
-                  Available Plots
-                </p>
+                <p className="text-sm font-medium text-gray-500">Available</p>
                 <p className="text-2xl font-bold text-gray-900">
                   {allPlots.filter((p) => p.status === "Available").length}
                 </p>
@@ -593,9 +669,7 @@ const Plots = () => {
                 <MapPin className="h-8 w-8 text-orange-600" />
               </div>
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-500">
-                  Tokened Plots
-                </p>
+                <p className="text-sm font-medium text-gray-500">Tokened</p>
                 <p className="text-2xl font-bold text-gray-900">
                   {allPlots.filter((p) => p.status === "Tokened").length}
                 </p>
@@ -623,9 +697,7 @@ const Plots = () => {
                 <MapPin className="h-8 w-8 text-yellow-600" />
               </div>
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-500">
-                  Booked Plots
-                </p>
+                <p className="text-sm font-medium text-gray-500">Booked</p>
                 <p className="text-2xl font-bold text-gray-900">
                   {allPlots.filter((p) => p.status === "Booked").length}
                 </p>
@@ -653,7 +725,7 @@ const Plots = () => {
                 <MapPin className="h-8 w-8 text-red-600" />
               </div>
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-500">Sold Plots</p>
+                <p className="text-sm font-medium text-gray-500">Sold</p>
                 <p className="text-2xl font-bold text-gray-900">
                   {allPlots.filter((p) => p.status === "Sold").length}
                 </p>
@@ -679,7 +751,7 @@ const Plots = () => {
                 <MapPin className="h-8 w-8 text-blue-600" />
               </div>
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-500">Total Plots</p>
+                <p className="text-sm font-medium text-gray-500">Total</p>
                 <p className="text-2xl font-bold text-gray-900">
                   {allPlots.length}
                 </p>
@@ -702,7 +774,7 @@ const Plots = () => {
               📊 Showing {filters.status} plots only
             </span>
             <span className="ml-2 text-blue-600">
-              ({plots.filter((p) => p.status === filters.status).length} plots)
+              ({pagination.totalRecords} plots found)
             </span>
           </div>
           <button
@@ -733,204 +805,410 @@ const Plots = () => {
         size="lg"
       >
         {selectedPlot && (
-          <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Site Name
-                </label>
-                <p className="mt-1 text-sm text-gray-900">
-                  {selectedPlot.siteName}
-                </p>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Plot Number
-                </label>
-                <p className="mt-1 text-sm text-gray-900">
-                  {selectedPlot.plotNumber}
-                </p>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Plot Size
-                </label>
-                <p className="mt-1 text-sm text-gray-900">
-                  {selectedPlot.plotSize}
-                </p>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Basic Rate
-                </label>
-                <p className="mt-1 text-sm text-gray-900">
-                  {formatCurrency(selectedPlot.basicRate)}
-                </p>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Total Price
-                </label>
-                <p className="mt-1 text-sm text-gray-900">
-                  {selectedPlot.totalPrice
-                    ? formatCurrency(selectedPlot.totalPrice)
-                    : "Not Calculated"}
-                </p>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Status
-                </label>
-                <span
-                  className={`badge ${getStatusColor(
-                    selectedPlot.status
-                  )} mt-1`}
-                >
-                  {selectedPlot.status}
-                </span>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Created Date
-                </label>
-                <p className="mt-1 text-sm text-gray-900">
-                  {formatDate(selectedPlot.createdAt)}
-                </p>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Last Updated
-                </label>
-                <p className="mt-1 text-sm text-gray-900">
-                  {selectedPlot.updatedAt
-                    ? formatDate(selectedPlot.updatedAt)
-                    : "Not updated"}
-                </p>
+          <div className="space-y-6">
+            {/* Basic Information */}
+            <div>
+              <h4 className="text-md font-medium text-gray-900 mb-3">
+                Basic Information
+              </h4>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Site Name
+                  </label>
+                  <p className="mt-1 text-sm text-gray-900">
+                    {selectedPlot.siteName}
+                  </p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Plot Number
+                  </label>
+                  <p className="mt-1 text-sm text-gray-900">
+                    {selectedPlot.plotNumber}
+                  </p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Block
+                  </label>
+                  <p className="mt-1 text-sm text-gray-900">
+                    {selectedPlot.block || "Not specified"}
+                  </p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Registered Company
+                  </label>
+                  <p className="mt-1 text-sm text-gray-900">
+                    {selectedPlot.registeredCompany || "Not specified"}
+                  </p>
+                </div>
               </div>
             </div>
 
-            {/* Customer Information for Booked/Sold Plots */}
-            {(selectedPlot.status === "Booked" ||
+            {/* Plot Dimensions */}
+            <div>
+              <h4 className="text-md font-medium text-gray-900 mb-3">
+                Plot Dimensions
+              </h4>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Length
+                  </label>
+                  <p className="mt-1 text-sm text-gray-900">
+                    {selectedPlot.length
+                      ? `${selectedPlot.length} ft`
+                      : "Not specified"}
+                  </p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Width
+                  </label>
+                  <p className="mt-1 text-sm text-gray-900">
+                    {selectedPlot.width
+                      ? `${selectedPlot.width} ft`
+                      : "Not specified"}
+                  </p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Plot Size
+                  </label>
+                  <p className="mt-1 text-sm text-gray-900">
+                    {selectedPlot.plotSize || "Not specified"}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Location & Features */}
+            <div>
+              <h4 className="text-md font-medium text-gray-900 mb-3">
+                Location & Features
+              </h4>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Road
+                  </label>
+                  <p className="mt-1 text-sm text-gray-900">
+                    {selectedPlot.road || "Not specified"}
+                  </p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Facing
+                  </label>
+                  <p className="mt-1 text-sm text-gray-900">
+                    {selectedPlot.facing || "Not specified"}
+                  </p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Gata/Khesra No
+                  </label>
+                  <p className="mt-1 text-sm text-gray-900">
+                    {selectedPlot.gataKhesraNo || "Not specified"}
+                  </p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    PLC Applicable
+                  </label>
+                  <p className="mt-1 text-sm text-gray-900">
+                    {selectedPlot.plcApplicable ? "Yes" : "No"}
+                    {selectedPlot.plcApplicable && selectedPlot.typeofPLC && (
+                      <span className="text-gray-600">
+                        {" "}
+                        ({selectedPlot.typeofPLC})
+                      </span>
+                    )}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Pricing & Status */}
+            <div>
+              <h4 className="text-md font-medium text-gray-900 mb-3">
+                Pricing & Status
+              </h4>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Basic Rate
+                  </label>
+                  <p className="mt-1 text-sm text-gray-900">
+                    {formatCurrency(selectedPlot.basicRate)} per sq yard
+                  </p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Total Price
+                  </label>
+                  <p className="mt-1 text-sm text-gray-900">
+                    {selectedPlot.totalPrice
+                      ? formatCurrency(selectedPlot.totalPrice)
+                      : "Not Calculated"}
+                  </p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Status
+                  </label>
+                  <span
+                    className={`badge ${getStatusColor(
+                      selectedPlot.status
+                    )} mt-1`}
+                  >
+                    {selectedPlot.status}
+                  </span>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Available for Sale
+                  </label>
+                  <p className="mt-1 text-sm text-gray-900">
+                    {selectedPlot.availablePlot ? "Yes" : "No"}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Description */}
+            {selectedPlot.description && (
+              <div>
+                <h4 className="text-md font-medium text-gray-900 mb-3">
+                  Description
+                </h4>
+                <p className="text-sm text-gray-900 bg-gray-50 p-3 rounded-lg">
+                  {selectedPlot.description}
+                </p>
+              </div>
+            )}
+
+            {/* Timestamps */}
+            <div>
+              <h4 className="text-md font-medium text-gray-900 mb-3">
+                Timestamps
+              </h4>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Created Date
+                  </label>
+                  <p className="mt-1 text-sm text-gray-900">
+                    {formatDate(selectedPlot.createdAt)}
+                  </p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Last Updated
+                  </label>
+                  <p className="mt-1 text-sm text-gray-900">
+                    {selectedPlot.updatedAt
+                      ? formatDate(selectedPlot.updatedAt)
+                      : "Not updated"}
+                  </p>
+                </div>
+              </div>
+            </div>
+            {/* Customer Information for Tokened/Booked/Sold Plots */}
+            {(selectedPlot.status === "Tokened" ||
+              selectedPlot.status === "Booked" ||
               selectedPlot.status === "Sold") && (
-              <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-                <h4 className="font-medium text-blue-900 mb-3">
-                  Customer Information
+              <div
+                className={`p-4 rounded-lg border ${
+                  selectedPlot.Status === "Tokened"
+                    ? "bg-orange-50 border-orange-200"
+                    : selectedPlot.Status === "Booked"
+                    ? "bg-yellow-50 border-yellow-200"
+                    : "bg-blue-50 border-blue-200"
+                }`}
+              >
+                <h4
+                  className={`font-medium mb-3 ${
+                    selectedPlot.Status === "Tokened"
+                      ? "text-orange-900"
+                      : selectedPlot.Status === "Booked"
+                      ? "text-yellow-900"
+                      : "text-blue-900"
+                  }`}
+                >
+                  {selectedPlot.Status === "Tokened"
+                    ? "Token Information"
+                    : "Customer Information"}
                 </h4>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-blue-700">
+                    <label
+                      className={`block text-sm font-medium ${
+                        selectedPlot.Status === "Tokened"
+                          ? "text-orange-700"
+                          : selectedPlot.Status === "Booked"
+                          ? "text-yellow-700"
+                          : "text-blue-700"
+                      }`}
+                    >
                       Customer Name
                     </label>
-                    <p className="mt-1 text-sm text-blue-900 font-medium">
-                      {selectedPlot.customerName || "Not available"}
+                    <p
+                      className={`mt-1 text-sm font-medium ${
+                        selectedPlot.Status === "Tokened"
+                          ? "text-orange-900"
+                          : selectedPlot.Status === "Booked"
+                          ? "text-yellow-900"
+                          : "text-blue-900"
+                      }`}
+                    >
+                      {selectedPlot.CustomerName || "Not available"}
                     </p>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-blue-700">
+                    <label
+                      className={`block text-sm font-medium ${
+                        selectedPlot.Status === "Tokened"
+                          ? "text-orange-700"
+                          : selectedPlot.Status === "Booked"
+                          ? "text-yellow-700"
+                          : "text-blue-700"
+                      }`}
+                    >
                       Associate
                     </label>
-                    <p className="mt-1 text-sm text-blue-900">
-                      {selectedPlot.associateName || "Not available"}
+                    <p
+                      className={`mt-1 text-sm ${
+                        selectedPlot.Status === "Tokened"
+                          ? "text-orange-900"
+                          : selectedPlot.Status === "Booked"
+                          ? "text-yellow-900"
+                          : "text-blue-900"
+                      }`}
+                    >
+                      {selectedPlot.AssociateName || "Not available"}
                     </p>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-blue-700">
+                    <label
+                      className={`block text-sm font-medium ${
+                        selectedPlot.Status === "Tokened"
+                          ? "text-orange-700"
+                          : selectedPlot.Status === "Booked"
+                          ? "text-yellow-700"
+                          : "text-blue-700"
+                      }`}
+                    >
                       Reference Name
                     </label>
-                    <p className="mt-1 text-sm text-blue-900">
-                      {selectedPlot.referenceName || "Not available"}
+                    <p
+                      className={`mt-1 text-sm ${
+                        selectedPlot.Status === "Tokened"
+                          ? "text-orange-900"
+                          : selectedPlot.Status === "Booked"
+                          ? "text-yellow-900"
+                          : "text-blue-900"
+                      }`}
+                    >
+                      {selectedPlot.ReferenceName || "Not available"}
                     </p>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-blue-700">
-                      Received Amount (Token)
+                    <label
+                      className={`block text-sm font-medium ${
+                        selectedPlot.Status === "Tokened"
+                          ? "text-orange-700"
+                          : selectedPlot.Status === "Booked"
+                          ? "text-yellow-700"
+                          : "text-blue-700"
+                      }`}
+                    >
+                      {selectedPlot.Status === "Tokened"
+                        ? "Token Amount"
+                        : "Received Amount"}
                     </label>
-                    <p className="mt-1 text-sm text-blue-900 font-medium">
-                      {selectedPlot.receivedAmount &&
-                      selectedPlot.receivedAmount > 0
-                        ? formatCurrency(selectedPlot.receivedAmount)
+                    <p
+                      className={`mt-1 text-sm font-medium ${
+                        selectedPlot.Status === "Tokened"
+                          ? "text-orange-900"
+                          : selectedPlot.Status === "Booked"
+                          ? "text-yellow-900"
+                          : "text-blue-900"
+                      }`}
+                    >
+                      {selectedPlot.ReceivedAmount &&
+                      selectedPlot.ReceivedAmount > 0
+                        ? formatCurrency(selectedPlot.ReceivedAmount)
                         : "₹0"}
                     </p>
                   </div>
-                  {selectedPlot.totalPaid > 0 && (
+                  {selectedPlot.Status === "Tokened" &&
+                    selectedPlot.TokenExpiryDate && (
+                      <div>
+                        <label className="block text-sm font-medium text-orange-700">
+                          Token Expiry Date
+                        </label>
+                        <p className="mt-1 text-sm font-medium text-orange-900">
+                          {formatDate(selectedPlot.TokenExpiryDate)}
+                        </p>
+                      </div>
+                    )}
+                  {(selectedPlot.TotalPaid > 0 ||
+                    selectedPlot.RemainingBalance > 0) && (
                     <>
                       <div>
-                        <label className="block text-sm font-medium text-blue-700">
+                        <label
+                          className={`block text-sm font-medium ${
+                            selectedPlot.Status === "Tokened"
+                              ? "text-orange-700"
+                              : selectedPlot.Status === "Booked"
+                              ? "text-yellow-700"
+                              : "text-blue-700"
+                          }`}
+                        >
                           Total Paid
                         </label>
-                        <p className="mt-1 text-sm text-blue-900 font-medium">
-                          {formatCurrency(selectedPlot.totalPaid)}
+                        <p
+                          className={`mt-1 text-sm font-medium ${
+                            selectedPlot.Status === "Tokened"
+                              ? "text-orange-900"
+                              : selectedPlot.Status === "Booked"
+                              ? "text-yellow-900"
+                              : "text-blue-900"
+                          }`}
+                        >
+                          {formatCurrency(selectedPlot.TotalPaid || 0)}
                         </p>
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-blue-700">
+                        <label
+                          className={`block text-sm font-medium ${
+                            selectedPlot.Status === "Tokened"
+                              ? "text-orange-700"
+                              : selectedPlot.Status === "Booked"
+                              ? "text-yellow-700"
+                              : "text-blue-700"
+                          }`}
+                        >
                           Remaining Balance
                         </label>
-                        <p className="mt-1 text-sm text-blue-900">
-                          {formatCurrency(selectedPlot.remainingBalance || 0)}
+                        <p
+                          className={`mt-1 text-sm ${
+                            selectedPlot.Status === "Tokened"
+                              ? "text-orange-900"
+                              : selectedPlot.Status === "Booked"
+                              ? "text-yellow-900"
+                              : "text-blue-900"
+                          }`}
+                        >
+                          {formatCurrency(selectedPlot.RemainingBalance || 0)}
                         </p>
                       </div>
                     </>
                   )}
                 </div>
-              </div>
-            )}
-
-            {/* Token Information for Tokened Plots */}
-            {selectedPlot.status === "Tokened" && (
-              <div className="bg-orange-50 p-4 rounded-lg border border-orange-200">
-                <h4 className="font-medium text-orange-900 mb-3">
-                  Token Information
-                </h4>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-orange-700">
-                      Token Amount
-                    </label>
-                    <p className="mt-1 text-sm text-orange-900 font-medium">
-                      {selectedPlot.receivedAmount && selectedPlot.receivedAmount > 0
-                        ? formatCurrency(selectedPlot.receivedAmount)
-                        : "₹0"}
-                    </p>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-orange-700">
-                      Token Expiry Date
-                    </label>
-                    <p className="mt-1 text-sm text-orange-900 font-medium">
-                      {selectedPlot.tokenExpiryDate
-                        ? formatDate(selectedPlot.tokenExpiryDate)
-                        : "Not available"}
-                    </p>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-orange-700">
-                      Customer Name
-                    </label>
-                    <p className="mt-1 text-sm text-orange-900">
-                      {selectedPlot.customerName || "Not available"}
-                    </p>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-orange-700">
-                      Associate
-                    </label>
-                    <p className="mt-1 text-sm text-orange-900">
-                      {selectedPlot.associateName || "Not available"}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {selectedPlot.description && (
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Description
-                </label>
-                <p className="mt-1 text-sm text-gray-900">
-                  {selectedPlot.description}
-                </p>
               </div>
             )}
           </div>
