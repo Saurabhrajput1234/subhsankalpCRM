@@ -126,27 +126,36 @@ const CreateReceiptForm = ({ isOpen, onClose, onSuccess }) => {
 
   const fetchNextReceiptNumber = async () => {
     try {
+      const currentFY = getCurrentFinancialYear();
+      
       // Get the latest receipt to determine next number
       const response = await receiptsAPI.getReceipts({
-        pageSize: 1,
+        pageSize: 100, // Get more receipts to find the latest for current FY
         sortBy: "createdAt",
         sortOrder: "desc",
       });
       const receipts = response.data.data || [];
 
-      if (receipts.length > 0) {
-        const lastReceiptNo = receipts[0].receiptNo;
+      // Filter receipts for current financial year
+      const currentFYReceipts = receipts.filter(receipt => 
+        receipt.receiptNo && receipt.receiptNo.includes(`/${currentFY}/`)
+      );
 
-        // All receipts now use 4-digit format after migration
-        const lastNumber = parseInt(lastReceiptNo) || 0;
+      if (currentFYReceipts.length > 0) {
+        // Extract the sequential number from the latest receipt
+        const lastReceiptNo = currentFYReceipts[0].receiptNo;
+        const parts = lastReceiptNo.split('/');
+        const lastNumber = parseInt(parts[parts.length - 1]) || 0;
         const nextNumber = (lastNumber + 1).toString().padStart(4, "0");
-        setNextReceiptNo(nextNumber);
+        setNextReceiptNo(`BR/${currentFY}/${nextNumber}`);
       } else {
-        setNextReceiptNo("0001");
+        // First receipt for this financial year
+        setNextReceiptNo(`BR/${currentFY}/0001`);
       }
     } catch (error) {
       console.error("Error fetching next receipt number:", error);
-      setNextReceiptNo("0001"); // Default to 0001 if error
+      const currentFY = getCurrentFinancialYear();
+      setNextReceiptNo(`BR/${currentFY}/0001`); // Default for current FY
     }
   };
 
@@ -226,6 +235,25 @@ const CreateReceiptForm = ({ isOpen, onClose, onSuccess }) => {
       : selectedPlot?.basicRate || 0;
   };
 
+  const getCurrentFinancialYear = () => {
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth() + 1; // JavaScript months are 0-indexed
+    
+    // Financial year starts from April (month 4)
+    if (currentMonth >= 4) {
+      // April to March of next year
+      const startYear = currentYear.toString().slice(-2);
+      const endYear = (currentYear + 1).toString().slice(-2);
+      return `${startYear}-${endYear}`;
+    } else {
+      // January to March of current year (belongs to previous financial year)
+      const startYear = (currentYear - 1).toString().slice(-2);
+      const endYear = currentYear.toString().slice(-2);
+      return `${startYear}-${endYear}`;
+    }
+  };
+
   const updatePlotBasicRate = async (plotId, newRate) => {
     try {
       await plotsAPI.updatePlot(plotId, { basicRate: newRate });
@@ -261,6 +289,7 @@ const CreateReceiptForm = ({ isOpen, onClose, onSuccess }) => {
       // Include custom basic rate if modified by admin
       const submitData = {
         ...data,
+        receiptNo: nextReceiptNo, // Full receipt number with BR/FY/sequence format
         ...(isRateModified &&
           isAdmin() && {
             customBasicRate: parseFloat(customBasicRate),
@@ -316,7 +345,8 @@ const CreateReceiptForm = ({ isOpen, onClose, onSuccess }) => {
     setAmountInWords("");
     setPlotSearch("");
     setShowPlotDropdown(false);
-    setNextReceiptNo("0001");
+    const currentFY = getCurrentFinancialYear();
+    setNextReceiptNo(`BR/${currentFY}/0001`);
     setCustomBasicRate("");
     setIsRateModified(false);
     setUpdatePlotRate(false);
@@ -366,11 +396,131 @@ const CreateReceiptForm = ({ isOpen, onClose, onSuccess }) => {
 
           {/* Form */}
           <form onSubmit={handleSubmit(onSubmit)} className="p-6 space-y-6">
-            {/* Plot Information */}
+            {/* Customer Information */}
             <div>
               <h4 className="text-md font-medium text-gray-900 mb-4 flex items-center">
                 <span className="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded-full mr-2">
                   1
+                </span>
+                Customer Information
+              </h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Customer Name *
+                  </label>
+                  <input
+                    {...register("fromName", {
+                      required: "Customer name is required",
+                    })}
+                    type="text"
+                    className="input"
+                    placeholder="Enter customer name"
+                  />
+                  {errors.fromName && (
+                    <p className="mt-1 text-sm text-red-600">
+                      {errors.fromName.message}
+                    </p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Mobile Number *
+                  </label>
+                  <input
+                    {...register("mobile", {
+                      required: "Mobile number is required",
+                      pattern: {
+                        value: /^[6-9]\d{9}$/,
+                        message: "Enter a valid 10-digit mobile number",
+                      },
+                    })}
+                    type="tel"
+                    className="input"
+                    placeholder="Enter mobile number"
+                  />
+                  {errors.mobile && (
+                    <p className="mt-1 text-sm text-red-600">
+                      {errors.mobile.message}
+                    </p>
+                  )}
+                </div>
+
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Address *
+                  </label>
+                  <textarea
+                    {...register("address", {
+                      required: "Address is required",
+                    })}
+                    rows={3}
+                    className="input"
+                    placeholder="Enter complete address"
+                  />
+                  {errors.address && (
+                    <p className="mt-1 text-sm text-red-600">
+                      {errors.address.message}
+                    </p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Relation Type
+                  </label>
+                  <select {...register("relationType")} className="input">
+                    <option value="S/O">S/O (Son of)</option>
+                    <option value="D/O">D/O (Daughter of)</option>
+                    <option value="W/O">W/O (Wife of)</option>
+                    <option value="H/O">H/O (Husband of)</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Relation Name
+                  </label>
+                  <input
+                    {...register("relationName")}
+                    type="text"
+                    className="input"
+                    placeholder="Enter relation name"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    PAN Number
+                  </label>
+                  <input
+                    {...register("panNumber")}
+                    type="text"
+                    className="input"
+                    placeholder="Enter PAN number"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Aadhar Number
+                  </label>
+                  <input
+                    {...register("aadharNumber")}
+                    type="text"
+                    className="input"
+                    placeholder="Enter Aadhar number"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Plot Information */}
+            <div>
+              <h4 className="text-md font-medium text-gray-900 mb-4 flex items-center">
+                <span className="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded-full mr-2">
+                  2
                 </span>
                 Plot Information
               </h4>
@@ -530,126 +680,6 @@ const CreateReceiptForm = ({ isOpen, onClose, onSuccess }) => {
                       can edit if needed.
                     </p>
                   )}
-                </div>
-              </div>
-            </div>
-
-            {/* Customer Information */}
-            <div>
-              <h4 className="text-md font-medium text-gray-900 mb-4 flex items-center">
-                <span className="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded-full mr-2">
-                  2
-                </span>
-                Customer Information
-              </h4>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Customer Name *
-                  </label>
-                  <input
-                    {...register("fromName", {
-                      required: "Customer name is required",
-                    })}
-                    type="text"
-                    className="input"
-                    placeholder="Enter customer name"
-                  />
-                  {errors.fromName && (
-                    <p className="mt-1 text-sm text-red-600">
-                      {errors.fromName.message}
-                    </p>
-                  )}
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Mobile Number *
-                  </label>
-                  <input
-                    {...register("mobile", {
-                      required: "Mobile number is required",
-                      pattern: {
-                        value: /^[6-9]\d{9}$/,
-                        message: "Enter a valid 10-digit mobile number",
-                      },
-                    })}
-                    type="tel"
-                    className="input"
-                    placeholder="Enter mobile number"
-                  />
-                  {errors.mobile && (
-                    <p className="mt-1 text-sm text-red-600">
-                      {errors.mobile.message}
-                    </p>
-                  )}
-                </div>
-
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Address *
-                  </label>
-                  <textarea
-                    {...register("address", {
-                      required: "Address is required",
-                    })}
-                    rows={3}
-                    className="input"
-                    placeholder="Enter complete address"
-                  />
-                  {errors.address && (
-                    <p className="mt-1 text-sm text-red-600">
-                      {errors.address.message}
-                    </p>
-                  )}
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Relation Type
-                  </label>
-                  <select {...register("relationType")} className="input">
-                    <option value="S/O">S/O (Son of)</option>
-                    <option value="D/O">D/O (Daughter of)</option>
-                    <option value="W/O">W/O (Wife of)</option>
-                    <option value="H/O">H/O (Husband of)</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Relation Name
-                  </label>
-                  <input
-                    {...register("relationName")}
-                    type="text"
-                    className="input"
-                    placeholder="Enter relation name"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    PAN Number
-                  </label>
-                  <input
-                    {...register("panNumber")}
-                    type="text"
-                    className="input"
-                    placeholder="Enter PAN number"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Aadhar Number
-                  </label>
-                  <input
-                    {...register("aadharNumber")}
-                    type="text"
-                    className="input"
-                    placeholder="Enter Aadhar number"
-                  />
                 </div>
 
                 {/* Plot Details - Auto-filled when plot is selected */}
@@ -829,27 +859,6 @@ const CreateReceiptForm = ({ isOpen, onClose, onSuccess }) => {
                 Payment Information
               </h4>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* Receipt Type */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Receipt Type *
-                  </label>
-                  <select
-                    {...register("receiptType", {
-                      required: "Receipt type is required",
-                    })}
-                    className="input"
-                  >
-                    <option value="token">Token Receipt</option>
-                    <option value="booking">Booking Receipt</option>
-                  </select>
-                  {errors.receiptType && (
-                    <p className="mt-1 text-sm text-red-600">
-                      {errors.receiptType.message}
-                    </p>
-                  )}
-                </div>
-
                 {/* Date Field */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
