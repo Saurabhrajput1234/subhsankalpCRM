@@ -1,0 +1,3 @@
+﻿<Project>
+  <Import Project="..\build\Subh-sankalp-estate.props" />
+</Project>
