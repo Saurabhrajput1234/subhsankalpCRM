@@ -415,10 +415,10 @@ namespace Subh_sankalp_estate.Controllers
                 var currentTotalPrice = receipt.Plot.TotalPrice > 0 ? receipt.Plot.TotalPrice : (plotSize * currentBasicRate);
                 
                 Console.WriteLine($"Plot: {receipt.Plot.SiteName} - {receipt.Plot.PlotNumber}");
-                Console.WriteLine($"Plot Size: {plotSize} sq ft");
-                Console.WriteLine($"Current Basic Rate: ₹{currentBasicRate}/sq ft");
+                Console.WriteLine($"Plot Size: {plotSize} sq yard");
+                Console.WriteLine($"Current Basic Rate: ₹{currentBasicRate}/sq yard");
                 Console.WriteLine($"Current Total Price: ₹{currentTotalPrice}");
-                Console.WriteLine($"Discount to Apply: ₹{basicRateDiscount}/sq ft");
+                Console.WriteLine($"Discount to Apply: ₹{basicRateDiscount}/sq yard");
                 
                 // Calculate new basic rate after discount
                 var newBasicRate = Math.Max(0, currentBasicRate - basicRateDiscount);
@@ -433,11 +433,11 @@ namespace Subh_sankalp_estate.Controllers
                 // Also update the receipt's basic rate to reflect the discount
                 receipt.BasicRate = newBasicRate;
                 
-                Console.WriteLine($"NEW Basic Rate: ₹{newBasicRate}/sq ft");
+                Console.WriteLine($"NEW Basic Rate: ₹{newBasicRate}/sq yard");
                 Console.WriteLine($"NEW Total Price: ₹{newTotalPrice}");
                 Console.WriteLine($"Total Discount Applied: ₹{totalDiscountAmount}");
                 Console.WriteLine($"Receipt Amount Unchanged: ₹{receipt.TotalAmount}");
-                Console.WriteLine($"Receipt Basic Rate Updated: ₹{receipt.BasicRate}/sq ft");
+                Console.WriteLine($"Receipt Basic Rate Updated: ₹{receipt.BasicRate}/sq yard");
                 
                 // Verify the receipt entity state
                 var receiptEntityEntry = _context.Entry(receipt);

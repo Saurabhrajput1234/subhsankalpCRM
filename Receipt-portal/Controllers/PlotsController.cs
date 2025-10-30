@@ -1293,7 +1293,7 @@ namespace Subh_sankalp_estate.Controllers
                     .Sum(r => r.TotalAmount > 0 ? r.TotalAmount : r.Amount);
 
                 return Ok(new {
-                    PlotInfo = $"{plot.SiteName} - {plot.PlotNumber} ({plotSize} sq ft)",
+                    PlotInfo = $"{plot.SiteName} - {plot.PlotNumber} ({plotSize})",
                     
                     BasicRateBreakdown = new {
                         OriginalBasicRate = originalBasicRate,
@@ -1505,7 +1505,7 @@ namespace Subh_sankalp_estate.Controllers
                 var plotSize = ParsePlotSize(plot.PlotSize);
 
                 return Ok(new {
-                    PlotInfo = $"{plot.SiteName} - {plot.PlotNumber} ({plotSize} sq ft)",
+                    PlotInfo = $"{plot.SiteName} - {plot.PlotNumber} ({plotSize} sq yard)",
                     
                     CurrentState = new {
                         PlotBasicRate = plot.BasicRate,
@@ -1539,7 +1539,7 @@ namespace Subh_sankalp_estate.Controllers
                     
                     ExpectedBehavior = new {
                         ReceiptAmounts = "Should remain exactly as entered by associate",
-                        PlotTotalPrice = "Should be reduced by (discount per sq ft × plot size)",
+                        PlotTotalPrice = "Should be reduced by (discount per sq yard × plot size)",
                         ReceivedAmount = "Should be sum of actual receipt amounts (unchanged)"
                     }
                 });
@@ -1660,9 +1660,9 @@ namespace Subh_sankalp_estate.Controllers
                     },
                     
                     Formula = new {
-                        Step1 = $"Original: {plotSize} sq ft × ₹{originalBasicRate} = ₹{originalTotalPrice:N0}",
-                        Step2 = $"Discount: ₹{originalBasicRate} - ₹{basicRateDiscount} = ₹{newBasicRate} per sq ft",
-                        Step3 = $"New Total: {plotSize} sq ft × ₹{newBasicRate} = ₹{newTotalPrice:N0}",
+                        Step1 = $"Original: {plotSize} sq yard × ₹{originalBasicRate} = ₹{originalTotalPrice:N0}",
+                        Step2 = $"Discount: ₹{originalBasicRate} - ₹{basicRateDiscount} = ₹{newBasicRate} per sq yard",
+                        Step3 = $"New Total: {plotSize} sq yard × ₹{newBasicRate} = ₹{newTotalPrice:N0}",
                         Step4 = $"Total Discount: ₹{originalTotalPrice:N0} - ₹{newTotalPrice:N0} = ₹{totalDiscountAmount:N0}"
                     }
                 });
@@ -1806,7 +1806,7 @@ namespace Subh_sankalp_estate.Controllers
 
                         results.Add(new {
                             PlotId = plot.Id,
-                            PlotInfo = $"{plot.SiteName} - {plot.PlotNumber} ({plotSize} sq ft)",
+                            PlotInfo = $"{plot.SiteName} - {plot.PlotNumber} ({plotSize} sq yard)",
                             OriginalBasicRate = originalBasicRate,
                             TotalBasicRateDiscount = totalBasicRateDiscount,
                             OldBasicRate = oldBasicRate,

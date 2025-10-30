@@ -93,7 +93,7 @@ export const parseCSVToPlotData = (csvText) => {
     
     // Plot Size
     if (values[idx]) {
-      plot.plotSize = values[idx].includes('sq') ? values[idx] : `${values[idx]} sq yard`;
+      plot.plotSize = values[idx].includes('sq') ? values[idx] : `${values[idx]}`;
       idx++;
     }
     

@@ -34,7 +34,7 @@ const BulkCreatePlotsForm = ({ isOpen, onClose, onSuccess }) => {
     watch,
   } = useForm({
     defaultValues: {
-      siteName: "Hare Krishna Township Phase 2",
+      siteName: "Golden City Township",
     },
   });
 
