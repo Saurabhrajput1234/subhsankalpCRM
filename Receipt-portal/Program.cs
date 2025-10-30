@@ -11,13 +11,11 @@ namespace Subh_sankalp_estate
     {
         public static void Main(string[] args)
         {
-            AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
-
             var builder = WebApplication.CreateBuilder(args);
 
             // Add services to the container.
             builder.Services.AddDbContext<ApplicationDbContext>(options =>
-                options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"),
+                options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"),
                     o => o.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery)));
 
             // JWT Configuration

@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("Subh-sankalp-estate")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Release")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+3eb0ad27762581ee30c7fa52f28be0488b81c395")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+2f9ab3ab7f5e341b7f381c82f54837117fad8c53")]
 [assembly: System.Reflection.AssemblyProductAttribute("Subh-sankalp-estate")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Subh-sankalp-estate")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

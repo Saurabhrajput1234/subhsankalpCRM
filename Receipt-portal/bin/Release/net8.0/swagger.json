@@ -1699,22 +1699,56 @@
     "BulkPlotDataDto": {
       "required": [
         "basicRate",
-        "plotNumber",
-        "plotSize"
+        "plotNumber"
       ],
       "type": "object",
       "properties": {
+        "block": {
+          "type": "string"
+        },
         "plotNumber": {
           "minLength": 1,
           "type": "string"
         },
+        "length": {
+          "format": "double",
+          "type": "number"
+        },
+        "width": {
+          "format": "double",
+          "type": "number"
+        },
+        "area": {
+          "format": "double",
+          "type": "number"
+        },
         "plotSize": {
-          "minLength": 1,
           "type": "string"
         },
         "basicRate": {
           "format": "double",
           "type": "number"
+        },
+        "road": {
+          "type": "string"
+        },
+        "plcApplicable": {
+          "type": "boolean"
+        },
+        "typeofPLC": {
+          "type": "string"
+        },
+        "facing": {
+          "type": "string"
+        },
+        "registeredCompany": {
+          "type": "string"
+        },
+        "gataKhesraNo": {
+          "type": "string"
+        },
+        "availablePlot": {
+          "type": "boolean"
         }
       }
     },
@@ -1755,9 +1789,24 @@
           "minLength": 1,
           "type": "string"
         },
+        "block": {
+          "type": "string"
+        },
         "plotNumber": {
           "minLength": 1,
           "type": "string"
+        },
+        "length": {
+          "format": "double",
+          "type": "number"
+        },
+        "width": {
+          "format": "double",
+          "type": "number"
+        },
+        "area": {
+          "format": "double",
+          "type": "number"
         },
         "plotSize": {
           "type": "string"
@@ -1765,6 +1814,27 @@
         "basicRate": {
           "format": "double",
           "type": "number"
+        },
+        "road": {
+          "type": "string"
+        },
+        "plcApplicable": {
+          "type": "boolean"
+        },
+        "typeofPLC": {
+          "type": "string"
+        },
+        "facing": {
+          "type": "string"
+        },
+        "registeredCompany": {
+          "type": "string"
+        },
+        "gataKhesraNo": {
+          "type": "string"
+        },
+        "availablePlot": {
+          "type": "boolean"
         },
         "description": {
           "type": "string"
@@ -2048,8 +2118,23 @@
         "siteName": {
           "type": "string"
         },
+        "block": {
+          "type": "string"
+        },
         "plotNumber": {
           "type": "string"
+        },
+        "length": {
+          "format": "double",
+          "type": "number"
+        },
+        "width": {
+          "format": "double",
+          "type": "number"
+        },
+        "area": {
+          "format": "double",
+          "type": "number"
         },
         "plotSize": {
           "type": "string"
@@ -2057,6 +2142,27 @@
         "basicRate": {
           "format": "double",
           "type": "number"
+        },
+        "road": {
+          "type": "string"
+        },
+        "plcApplicable": {
+          "type": "boolean"
+        },
+        "typeofPLC": {
+          "type": "string"
+        },
+        "facing": {
+          "type": "string"
+        },
+        "registeredCompany": {
+          "type": "string"
+        },
+        "gataKhesraNo": {
+          "type": "string"
+        },
+        "availablePlot": {
+          "type": "boolean"
         },
         "totalPrice": {
           "format": "double",
@@ -2351,12 +2457,48 @@
     "UpdatePlotDto": {
       "type": "object",
       "properties": {
+        "block": {
+          "type": "string"
+        },
+        "length": {
+          "format": "double",
+          "type": "number"
+        },
+        "width": {
+          "format": "double",
+          "type": "number"
+        },
+        "area": {
+          "format": "double",
+          "type": "number"
+        },
         "plotSize": {
           "type": "string"
         },
         "basicRate": {
           "format": "double",
           "type": "number"
+        },
+        "road": {
+          "type": "string"
+        },
+        "plcApplicable": {
+          "type": "boolean"
+        },
+        "typeofPLC": {
+          "type": "string"
+        },
+        "facing": {
+          "type": "string"
+        },
+        "registeredCompany": {
+          "type": "string"
+        },
+        "gataKhesraNo": {
+          "type": "string"
+        },
+        "availablePlot": {
+          "type": "boolean"
         },
         "description": {
           "type": "string"
